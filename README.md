@@ -1,1 +1,1 @@
-# finalproject-server
+# SCHOX Server - Final Project
