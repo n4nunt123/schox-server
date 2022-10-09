@@ -14,8 +14,11 @@ const errHandler = (err, req, res, next) => {
     } else if (err.name === "Unauthorized") {
         code = 401
         message = "Unauthorized"
+    } else if (err.name === "notfound") {
+        code = 404
+        message = "Data Not Found"
     }
-    
+
     res.status(code).json({ message });
 };
 
