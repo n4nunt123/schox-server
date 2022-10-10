@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const {hashPassword} = require('../helpers/bcrypt');
 module.exports = (sequelize, DataTypes) => {
   class Driver extends Model {
     /**
@@ -29,5 +30,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Driver',
   });
+  Driver.beforeCreate((driver, options) => {
+    driver.password = hashPassword(driver.password)
+  })
   return Driver;
 };

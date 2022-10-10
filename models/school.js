@@ -15,9 +15,30 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   School.init({
-    name: DataTypes.STRING,
-    coordinate: DataTypes.STRING,
-    address: DataTypes.STRING
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Name is required" },
+        notEmpty: { msg: "Name is required" },
+      }
+    },
+    coordinate: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Coordinate is required" },
+        notEmpty: { msg: "Coordinate is required" },
+      }
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Address is required" },
+        notEmpty: { msg: "Address is required" },
+      }
+    }
   }, {
     sequelize,
     modelName: 'School',

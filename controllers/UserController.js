@@ -91,8 +91,10 @@ class UserController {
                 const createSchool = await School.create({ name, coordinate, address }, { transaction: t })
                 SchoolId = createSchool.id
             }
+            //TODO dayJS
             if (type == "weekly") endDate = startDate.setDate(date.getDate() + 7) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
             else if (type == "monthly") endDate = startDate.setDate(date.getDate() + 30)
+
 
             const createSubs = await Subscription({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
