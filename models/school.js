@@ -23,12 +23,20 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty: { msg: "Name is required" },
       }
     },
-    coordinate: {
+    latitude: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notNull: { msg: "Coordinate is required" },
-        notEmpty: { msg: "Coordinate is required" },
+        notNull: { msg: "Latitude is required" },
+        notEmpty: { msg: "Latitude is required" },
+      }
+    },
+    longitude: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Longitude is required" },
+        notEmpty: { msg: "Longitude is required" },
       }
     },
     address: {

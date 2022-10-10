@@ -12,7 +12,8 @@ class UserController {
                 password,
                 phoneNumber,
                 address,
-                houseCoordinate,
+                latitude,
+                longitude,
                 childrenName,
             } = req.body;
 
@@ -22,7 +23,8 @@ class UserController {
                 password,
                 phoneNumber,
                 address,
-                houseCoordinate,
+                latitude,
+                longitude,
                 childrenName,
                 balance: 0,
             });
@@ -31,6 +33,7 @@ class UserController {
                 email: createUser.email,
             });
         } catch (err) {
+            console.log(err);
             next(err);
         }
     }
@@ -38,32 +41,38 @@ class UserController {
         try {
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
-            if (!findUser) throw { message: "invalid_email/pass" }
+            if (!findUser) throw { name: "invalid_email/pass" }
             const compare = comparePassword(password, findUser.password)
-            if (!compare) throw { message: "invalid_email/pass" }
+            if (!compare) throw { name: "invalid_email/pass" }
 
             const payload = { id: findUser.id }
             const access_token = signToken(payload)
 
-            res.status(200).json({ access_token });
+            res.status(200).json({access_token});
         } catch (err) {
             next(err);
         }
     }
 
-    // static async postBalances(req, res, next) {
-    //     try {
-    //         res.status(201).json({ message: "postBalances" });
-    //     } catch (err) {
-    //         next(err);
-    //     }
-    // }
+    static async postSchool(req, res, next) {
+        try {
+            const { name, latitude, longitude, address } = req.body
+            await School.create({ name, latitude, longitude, address })
+            res.status(201).json({message: "success create school"})
+        } catch (err) {
+            next(err)
+        }
+    }
+
+    // get all school
+
     static async getBalance(req, res, next) {
         try {
             const { userId } = req.params
-            const findUser = await User.findById(userId)
+            const findUser = await User.findByPk(userId)
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
@@ -82,22 +91,26 @@ class UserController {
         const t = await sequelize.transaction();
         try {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
+            const { id } = req.user
             let startDate = new Date()
-            let endDate
+            // let currtDate = new Date()
+            let endDate = new Date()
 
             //TODO dayJS
-            if (type == "weekly") endDate = startDate.setDate(date.getDate() + 7) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
-            else if (type == "monthly") endDate = startDate.setDate(date.getDate() + 30)
+            if (type == "weekly") endDate = new Date(endDate.setDate(startDate.getDate() + 7)) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
+            else if (type == "monthly") endDate = new Date(endDate.setDate(startDate.getDate() + 30))
 
 
-            const createSubs = await Subscription({
+            const createSubs = await Subscription.create({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
             }, { transaction: t })
+            await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
 
             t.commit();
             res.status(201).json({ message: "success create subscription " + createSubs.id });
         } catch (err) {
+            console.log(err)
             t.rollback()
             next(err);
         }
@@ -105,7 +118,7 @@ class UserController {
     static async getSubscription(req, res, next) {
         try {
             const { id } = req.params
-            const detailSubs = await Subscription.findById(id)
+            const detailSubs = await Subscription.findByPk(id)
             if (!detailSubs) throw { message: "notfound" }
             res.status(200).json(detailSubs);
         } catch (err) {
@@ -123,21 +136,25 @@ class UserController {
     static async getUserDetail(req, res, next) {
         try {
             const { id } = req.params
-            const detailUser = await User.findById(id)
+            const detailUser = await User.findByPk(id)
             if (!detailUser) throw { message: "notfound" }
             res.status(200).json(detailUser);
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
 
-    static async updateUser(req, res, next) {
-        try {
-            const { id } = req.params
-        } catch (err) {
-            next(err)
-        }
-    }
+    // static async updateUser(req, res, next) {
+    //     try {
+    //         const { id } = req.params
+    //         const { SubscriptionId } = req.body
+    //         await User.update({ SubscriptionId }, { where: { id }})
+    //         res.status(200).json({ message: "success update user" })
+    //     } catch (err) {
+    //         next(err)
+    //     }
+    // }
 }
 
 module.exports = UserController;
