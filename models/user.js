@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      User.belongsTo(models.Subscription)
+      User.belongsTo(models.Subscription, { onUpdate: "CASCADE", onDelete: "CASCADE" })
     }
   }
   User.init({

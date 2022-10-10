@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
   ShuttleRecord.init({
     status: DataTypes.STRING,
     type: DataTypes.STRING,
-    driverDepartAt: DataTypes.DATE,
     driverPickupAt: DataTypes.DATE,
     driverArriveAt: DataTypes.DATE,
     SubscriptionId: {

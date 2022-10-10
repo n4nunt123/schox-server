@@ -42,9 +42,9 @@ class UserController {
             console.log()
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
-            if (!findUser) throw { message: "invalid_email/pass" }
+            if (!findUser) throw { name: "invalid_email/pass" }
             const compare = comparePassword(password, findUser.password)
-            if (!compare) throw { message: "invalid_email/pass" }
+            if (!compare) throw { name: "invalid_email/pass" }
 
             const payload = { id: findUser.id }
             const access_token = signToken(payload)
@@ -80,6 +80,7 @@ class UserController {
             const findUser = await User.findByPk(userId)
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
@@ -100,7 +101,8 @@ class UserController {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
             const { id } = req.user
             let startDate = new Date()
-            let endDate
+            // let currtDate = new Date()
+            let endDate = new Date()
 
             if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7))
             else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30))
@@ -112,7 +114,6 @@ class UserController {
             await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
             res.status(201).json({ message: "success create subscription " + createSubs.id });
         } catch (err) {
-            console.log(err);
             next(err);
         }
     }
