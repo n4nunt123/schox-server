@@ -81,16 +81,10 @@ class UserController {
     static async postSubscription(req, res, next) {
         const t = await sequelize.transaction();
         try {
-            const { type, price, goHomeTime, toShoolTime, DriverId } = req.body
-            let { SchoolId } = req.body
+            const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
             let startDate = new Date()
             let endDate
 
-            if (!SchoolId) {
-                const { name, coordinate, address } = req.body
-                const createSchool = await School.create({ name, coordinate, address }, { transaction: t })
-                SchoolId = createSchool.id
-            }
             //TODO dayJS
             if (type == "weekly") endDate = startDate.setDate(date.getDate() + 7) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
             else if (type == "monthly") endDate = startDate.setDate(date.getDate() + 30)
