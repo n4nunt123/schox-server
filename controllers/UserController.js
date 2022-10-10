@@ -1,7 +1,6 @@
 const {comparePassword} = require("../helpers/bcrypt");
 const {signToken} = require("../helpers/jwt");
 const { User, School, Subscription } = require("../models");
-const { sequelize } = require("../models");
 const moment = require('moment')
 const business = require('moment-business');
 
@@ -97,7 +96,6 @@ class UserController {
     }
 
     static async postSubscription(req, res, next) {
-        const t = await sequelize.transaction();
         const today = moment()
         try {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
@@ -106,21 +104,16 @@ class UserController {
             // let currtDate = new Date()
             let endDate = new Date()
 
-            if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7));
-            else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30));
-
+            if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7))
+            else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30))
 
             const createSubs = await Subscription.create({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
-            }, { transaction: t })
+            })
             await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
-
-            t.commit();
             res.status(201).json({ message: "success create subscription " + createSubs.id });
         } catch (err) {
-            console.log(err)
-            t.rollback()
             next(err);
         }
     }
