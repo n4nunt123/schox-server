@@ -2,6 +2,8 @@ const {comparePassword} = require("../helpers/bcrypt");
 const {signToken} = require("../helpers/jwt");
 const { User, School, Subscription } = require("../models");
 const { sequelize } = require("../models");
+const moment = require('moment')
+const business = require('moment-business');
 
 class UserController {
     static async register(req, res, next) {
@@ -33,12 +35,12 @@ class UserController {
                 email: createUser.email,
             });
         } catch (err) {
-            console.log(err);
             next(err);
         }
     }
     static async login(req, res, next) {
         try {
+            console.log()
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
             if (!findUser) throw { message: "invalid_email/pass" }
@@ -48,7 +50,7 @@ class UserController {
             const payload = { id: findUser.id }
             const access_token = signToken(payload)
 
-            res.status(200).json({access_token});
+            res.status(200).json({access_token: access_token, id: findUser.id});
         } catch (err) {
             next(err);
         }
@@ -64,7 +66,14 @@ class UserController {
         }
     }
 
-    // get all school
+    static async getSchools(req, res, next) {
+        try {
+            const schools = await School.findAll()
+            res.status(200).json(schools)
+        } catch (err) {
+            next(err)
+        }
+    }
 
     static async getBalance(req, res, next) {
         try {
@@ -88,16 +97,15 @@ class UserController {
 
     static async postSubscription(req, res, next) {
         const t = await sequelize.transaction();
+        const today = moment()
         try {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
             const { id } = req.user
             let startDate = new Date()
             let endDate
 
-            //TODO dayJS
-            if (type == "weekly") endDate = endDate.setDate(startDate.getDate() + 7) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
-            else if (type == "monthly") endDate = endDate.setDate(startDate.getDate() + 30)
-
+            if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7));
+            else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30));
 
             const createSubs = await Subscription({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 

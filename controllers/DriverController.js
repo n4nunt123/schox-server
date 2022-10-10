@@ -1,6 +1,6 @@
 const {comparePassword} = require('../helpers/bcrypt');
 const {signToken} = require('../helpers/jwt');
-const { Driver } = require('../models');
+const { Driver, Subscription } = require('../models');
 
 class DriverController {
 
