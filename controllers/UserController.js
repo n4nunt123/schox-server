@@ -41,9 +41,9 @@ class UserController {
         try {
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
-            if (!findUser) throw { message: "invalid_email/pass" }
+            if (!findUser) throw { name: "invalid_email/pass" }
             const compare = comparePassword(password, findUser.password)
-            if (!compare) throw { message: "invalid_email/pass" }
+            if (!compare) throw { name: "invalid_email/pass" }
 
             const payload = { id: findUser.id }
             const access_token = signToken(payload)
@@ -72,6 +72,7 @@ class UserController {
             const findUser = await User.findByPk(userId)
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
@@ -92,14 +93,15 @@ class UserController {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
             const { id } = req.user
             let startDate = new Date()
-            let endDate
+            // let currtDate = new Date()
+            let endDate = new Date()
 
             //TODO dayJS
-            if (type == "weekly") endDate = endDate.setDate(startDate.getDate() + 7) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
-            else if (type == "monthly") endDate = endDate.setDate(startDate.getDate() + 30)
+            if (type == "weekly") endDate = new Date(endDate.setDate(startDate.getDate() + 7)) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
+            else if (type == "monthly") endDate = new Date(endDate.setDate(startDate.getDate() + 30))
 
 
-            const createSubs = await Subscription({
+            const createSubs = await Subscription.create({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
             }, { transaction: t })
@@ -108,6 +110,7 @@ class UserController {
             t.commit();
             res.status(201).json({ message: "success create subscription " + createSubs.id });
         } catch (err) {
+            console.log(err)
             t.rollback()
             next(err);
         }

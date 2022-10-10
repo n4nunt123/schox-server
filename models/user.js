@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      User.hasOne(models.Subscription, { onUpdate: "CASCADE", onDelete: "CASCADE" })
+      User.belongsTo(models.Subscription, { onUpdate: "CASCADE", onDelete: "CASCADE" })
     }
   }
   User.init({
