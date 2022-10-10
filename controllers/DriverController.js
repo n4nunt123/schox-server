@@ -51,6 +51,17 @@ class DriverController {
             next(err)
         }
     }
+
+    static async updateDriver(req, res, next) {
+        try {
+            const { id } = req.params
+            const { driverStatus } = req.body
+            await Driver.update({ driverStatus }, { where: { id } })
+            res.status(200).json({ message: "success update status driver" })
+        } catch (err) {
+            next(err)
+        }
+    }
 }
 
 module.exports = {
