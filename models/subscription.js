@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Subscription.belongsTo(models.Driver)
-      Subscription.belongsTo(models.User)
+      Subscription.hasOne(models.User)
       Subscription.belongsTo(models.School)
     }
   }

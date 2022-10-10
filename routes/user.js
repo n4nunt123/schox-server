@@ -9,12 +9,10 @@ user.use(authz)
 
 user.post("/schools", UserController.postSchool)
 user.get("/schools", UserController.getSchools)
-
+user.post("/subscriptions", UserController.postSubscription)
 // user.post("/balances", UserController.postBalances)
 user.get("/balances/:userId", UserController.getBalance)
 user.patch("/balances/:userId", UserController.updateBalance)
-
-user.post("/subscriptions", UserController.postSubscription)
 user.get("/subscriptions/:id", UserController.getSubscription)
 user.patch("/subscriptions/:id", UserController.updateSubscription)
 
