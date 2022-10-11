@@ -19,6 +19,7 @@ class UserController {
         longitude,
         childrenName,
       } = req.body;
+      
 
       const createUser = await User.create({
         fullName,
@@ -41,18 +42,18 @@ class UserController {
   }
   static async login(req, res, next) {
     try {
-      console.log();
       const { email, password } = req.body;
       const findUser = await User.findOne({ where: { email } });
-      if (!findUser) throw { name: "invalid_email/pass" };
+      if (!findUser) throw { name: "invalid_email/password" };
       const compare = comparePassword(password, findUser.password);
-      if (!compare) throw { name: "invalid_email/pass" };
+      if (!compare) throw { name: "invalid_email/password" };
 
       const payload = { id: findUser.id };
       const access_token = signToken(payload);
       
       res.status(200).json({ access_token: access_token, id: findUser.id });
     } catch (err) {
+      console.log(err)
       next(err);
     }
   }
@@ -112,6 +113,8 @@ class UserController {
             if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7))
             else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30))
 
+          console.log(startDate, endDate)
+          
             const createSubs = await Subscription.create({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
@@ -199,6 +202,7 @@ class UserController {
     } catch (err) {
       next(err);
     }
+  }
     
   static async getDetailChat(req, res, next) {
     try {

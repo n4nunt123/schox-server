@@ -25,14 +25,32 @@ describe("POST /drivers/login", () => {
       .post("/drivers/login")
       .send(payload)
       .then((response) => {
-        expect(response.status).toBe(500);
+        expect(response.status).toBe(401);
         expect(response.body).toBeInstanceOf(Object);
         expect(response.body).toHaveProperty(
           "message",
-          "Internal server error"
+          "Invalid email/password"
         );
       });
   });
+  test('POST /drivers/login - error test wrong password', () => {
+    const payload = {
+      email: "joemurray@gmail.com",
+      password: "passwordooooooooooooo",
+    };
+    return request(app)
+      .post("/drivers/login")
+      .send(payload)
+      .then((response) => {
+        console.log(response.status, 'woeeeeeeeeeeeeeeeeeee')
+        expect(response.status).toBe(401);
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty(
+          "message",
+          "Invalid email/password"
+        );
+      });
+  })
 });
 
 //* GET all drivers
@@ -60,13 +78,13 @@ describe("GET /drivers/:driverId", () => {
 
   test("GET /drivers/:driverId - error test", () => {
     return request(app)
-      .get("/drivers/4")
+      .get("/drivers/69")
       .then((response) => {
-        expect(response.status).toBe(500);
+        expect(response.status).toBe(404);
         expect(response.body).toBeInstanceOf(Object);
         expect(response.body).toHaveProperty(
           "message",
-          "Internal server error"
+          "Driver not found"
         );
       });
   });
@@ -93,13 +111,13 @@ describe("PATCH /drivers/:driverId", () => {
 
   test("PATCH /drivers/:driverId - error test", () => {
     return request(app)
-      .patch("/drivers/4")
+      .patch("/drivers/69")
       .then((response) => {
-        expect(response.status).toBe(500);
+        expect(response.status).toBe(404);
         expect(response.body).toBeInstanceOf(Object);
         expect(response.body).toHaveProperty(
           "message",
-          "Internal server error"
+          "Driver not found"
         );
       });
   });
@@ -107,33 +125,59 @@ describe("PATCH /drivers/:driverId", () => {
 
 //* UPDATE balance drivers
 describe("PATCH /drivers/balances/:driverId", () => {
-    const payload = {
-      balance: 100000,
-    };
-    test("PATCH /drivers/balances/:driverId - success test", () => {
-      return request(app)
-        .patch("/drivers/balances/1")
-        .send(payload)
-        .then((response) => {
-          expect(response.status).toBe(200);
-          expect(response.body).toBeInstanceOf(Object);
-          expect(response.body).toHaveProperty(
-            "message",
-            "success update driver balance with driver id: 1"
-          );
-        });
-    });
-  
-    test("PATCH /drivers/balances/:driverId - error test", () => {
-      return request(app)
-        .patch("/drivers/balances/4")
-        .then((response) => {
-          expect(response.status).toBe(500);
-          expect(response.body).toBeInstanceOf(Object);
-          expect(response.body).toHaveProperty(
-            "message",
-            "Internal server error"
-          );
-        });
-    });
+  const payload = {
+    balance: 100000,
+  };
+  test("PATCH /drivers/balances/:driverId - success test", () => {
+    return request(app)
+      .patch("/drivers/balances/1")
+      .send(payload)
+      .then((response) => {
+        expect(response.status).toBe(200);
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty(
+          "message",
+          "success update driver balance with driver id: 1"
+        );
+      });
   });
+
+  test("PATCH /drivers/balances/:driverId - error test", () => {
+    return request(app)
+      .patch("/drivers/balances/69")
+      .then((response) => {
+        expect(response.status).toBe(404);
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty(
+          "message",
+          "Driver not found"
+        );
+      });
+  });
+});
+
+describe('GET /drivers/chat/:id', () => {
+  test('GET /drivers/chat/:id - success test', () => {
+    return request(app)
+      .get('/drivers/chat/1')
+      .then((response) => {
+        expect(response.status).toBe(200)
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty('fullName')
+        expect(response.body).toHaveProperty('email')
+        expect(response.body).toHaveProperty('carLicenseNumber')
+        expect(response.body).toHaveProperty('carType')
+        expect(response.body).toHaveProperty('imgUrl')
+      })
+  })
+  
+  test('GET /drivers/chat/:id - failed test', () => {
+    return request(app)
+      .get('/drivers/chat/69')
+      .then((response) => {
+        expect(response.status).toBe(404)
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty("message", "Driver not found");
+      })
+  })
+})

@@ -17,8 +17,33 @@ const user = {
     balance: 0
 };
 
+const school = {
+  name: 'Highschool of nowhere',
+  address: 'Classified information',
+  latitude: 'Classified information',
+  longitude: 'Classified information'
+}
+
+const sub = {
+  type: 'Classified information',
+  price: 696969,
+  status: 'Classified information',
+  startDate: new Date(),
+  endDate: new Date(),
+  goHomeTime: 'Classified information',
+  toShoolTime: 'Classified information',
+  SchoolId: 1,
+  DriverId: 1
+}
+
 beforeAll((done) => {
-    User.create(user)
+  School.create(school)
+    .then(_ => {
+      return Subscription.create(sub)
+    })
+    .then(_ => {
+      return User.create(user)
+    })
     .then((result) => {
         const payload = {
             id: result.id
@@ -116,29 +141,7 @@ describe("User Test", () => {
             return done();
           });
       });
-
-      test("400 Failed Register -- should return error if email is already exists", (done) => {
-        request(app)
-          .post("/users/register")
-          .send({
-            fullName: "Maria Mercedes",
-            email: "mercedes@gmail.com",
-            password: "12345",
-            phoneNumber: "08123456789",
-            address: "Jalan Pegangsaan Timur No. 56",
-            latitude: "-6.203988",
-            longitude: "106.845031",
-            childrenName: "Rosalinda"
-          })
-          .end((err, res) => {
-            if (err) return done(err);
-            const { body, status } = res;
-            expect(status).toBe(400);
-            expect(body).toHaveProperty("message", "Email must be unique");
-            return done();
-          });
-      });
-
+      
       test("400 Failed Register -- should return error if password is null", (done) => {
         request(app)
           .post("/users/register")
@@ -368,38 +371,6 @@ describe("User Test", () => {
         });
     });
 
-    //PATCH User Balance
-    describe("PATCH /users/balances/:userId", () => {
-        test("201 Success Update -- should return success message", (done) => {
-          request(app)
-            .patch("/users/balances/1")
-            .send({
-                balance: 10000
-            })
-            .set('access_token', access_token)
-            .end((err, res) => {
-              if (err) return done(err);
-              const { body, status } = res;
-              expect(status).toBe(201);
-              expect(body).toHaveProperty("message", "success update balance with user id: 1");
-              return done();
-            });
-        });
-
-        test("404 Fail Update -- should return error if id is not in database", (done) => {
-          request(app)
-            .patch("/users/balances/1000")
-            .set('access_token', access_token)
-            .end((err, res) => {
-              if (err) return done(err);
-              const { body, status } = res;
-              expect(status).toBe(404);
-              expect(body).toHaveProperty("message", "Data Not Found");
-              return done();
-            });
-        });
-    });
-
     //POST User School
     describe("POST /users/schools", () => {
         test("201 Success Add -- should return success message", (done) => {
@@ -494,6 +465,21 @@ describe("User Test", () => {
         });
     });
 
+    // GET User School
+    describe('GET /users/schools', () => {
+      test('200 Success Get -- should return schools', (done) => {
+        request(app)
+            .get("/users/schools")
+            .set('access_token', access_token)
+            .end((err, res) => {
+              const { body, status } = res;
+              expect(status).toBe(200);
+              expect(body).toBeInstanceOf(Object);
+              return done();
+            });
+      })
+    })
+
     //POST User Subscription
     describe("POST /users/subscriptions", () => {
         test("201 Success Add -- should return success message", (done) => {
@@ -512,7 +498,7 @@ describe("User Test", () => {
               if (err) return done(err);
               const { body, status } = res;
               expect(status).toBe(201);
-              expect(body).toHaveProperty("message", "success create subscription 1");
+              expect(body).toHaveProperty("message", "success create subscription 2");
               return done();
             });
         });
@@ -659,4 +645,44 @@ describe("User Test", () => {
         });
     });
   });
+
+  describe('GET /users/chat/:userId', () => {
+    test("200 Success Read -- should return user detail", (done) => {
+      request(app)
+        .get("/users/chat/1")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(200);
+          expect(body).toHaveProperty("id", expect.any(Number));
+          expect(body).toHaveProperty("fullName", expect.any(String));
+          expect(body).toHaveProperty("email", expect.any(String));
+          expect(body).toHaveProperty("password", expect.any(String));
+          expect(body).toHaveProperty("phoneNumber", expect.any(String));
+          expect(body).toHaveProperty("address", expect.any(String));
+          expect(body).toHaveProperty("latitude", expect.any(String));
+          expect(body).toHaveProperty("longitude", expect.any(String));
+          expect(body).toHaveProperty("childrenName", expect.any(String));
+          expect(body).toHaveProperty("balance", expect.any(Number));
+          expect(body).toHaveProperty("SubscriptionId", expect.any(Number));
+          expect(body).toHaveProperty("createdAt", expect.any(String));
+          expect(body).toHaveProperty("updatedAt", expect.any(String));
+          return done();
+        });
+    });
+
+    test("404 Failed Read -- should return error if id is not in database", (done) => {
+      request(app)
+        .get("/users/1000")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(404);
+          expect(body).toHaveProperty("message", "Data Not Found");
+          return done();
+        });
+    });
+  })
 });
