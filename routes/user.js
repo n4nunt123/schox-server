@@ -5,6 +5,10 @@ const user = require("express").Router();
 user.post("/register", UserController.register);
 user.post("/login", UserController.login);
 
+
+user.get('/chat/:userId', UserController.getDetailChat) // untuk chat
+
+
 user.use(authz);
 
 user.post("/schools", UserController.postSchool);

@@ -1,6 +1,6 @@
 const { comparePassword } = require("../helpers/bcrypt");
 const { signToken } = require("../helpers/jwt");
-const { User, School, Subscription } = require("../models");
+const  {User, School, Subscription, Driver } = require("../models");
 const moment = require("moment");
 const business = require("moment-business");
 const midtransClient = require("midtrans-client");
@@ -50,7 +50,7 @@ class UserController {
 
       const payload = { id: findUser.id };
       const access_token = signToken(payload);
-
+      
       res.status(200).json({ access_token: access_token, id: findUser.id });
     } catch (err) {
       next(err);
@@ -80,7 +80,9 @@ class UserController {
         try {
             const { userId } = req.params
             const findUser = await User.findByPk(userId)
+            
             if (!findUser) throw { name: "notfound" }
+            
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
             next(err);
@@ -127,7 +129,6 @@ class UserController {
             if (!detailSubs) throw { name: "notfound" }
             res.status(200).json(detailSubs);
         } catch (err) {
-            console.log(err)
             next(err);
         }
     }
@@ -195,6 +196,22 @@ class UserController {
       snap.createTransaction(parameter).then((transaction) => {
         res.status(201).json(transaction);
       });
+    } catch (err) {
+      next(err);
+    }
+    
+  static async getDetailChat(req, res, next) {
+    try {
+      const { userId } = req.params
+      const detailUser = await User.findOne({
+          where: { id: userId },
+          include: [{
+              model: Subscription,
+              include: [Driver]
+            }]
+        })
+      if (!detailUser) throw { message: "notfound" }
+      res.status(200).json(detailUser);
     } catch (err) {
       next(err);
     }
