@@ -35,30 +35,26 @@ class UserController {
                 email: createUser.email,
             });
         } catch (err) {
-            //   next(err);
-            console.log(err);
-        }
-    }
-    static async login(req, res, next) {
-        try {
-            const { email, password } = req.body;
-            const findUser = await User.findOne({ where: { email } });
-            if (!findUser) throw { name: "invalid_email/pass" };
-            const compare = comparePassword(password, findUser.password);
-            if (!compare) throw { name: "invalid_email/pass" };
-
-            const payload = { id: findUser.id };
-            const access_token = signToken(payload);
-
-            res.status(200).json({
-                access_token: access_token,
-                id: findUser.id,
-            });
-        } catch (err) {
-            console.log(err);
             next(err);
         }
     }
+  
+  static async login(req, res, next) {
+    try {
+      const { email, password } = req.body;
+      const findUser = await User.findOne({ where: { email } });
+      if (!findUser) throw { name: "invalid_email/password" };
+      const compare = comparePassword(password, findUser.password);
+      if (!compare) throw { name: "invalid_email/password" };
+
+      const payload = { id: findUser.id };
+      const access_token = signToken(payload);
+      
+      res.status(200).json({ access_token: access_token, id: findUser.id });
+    } catch (err) {
+      next(err);
+    }
+  }
 
     static async postSchool(req, res, next) {
         try {
@@ -94,7 +90,6 @@ class UserController {
 
     static async postBalance(req, res, next) {
         try {
-            console.log(req.body);
             const check = req.body;
             const transId = check.order_id.split("-");
             transId.splice(1, 1);
@@ -150,7 +145,7 @@ class UserController {
                 endDate = new Date(business.addWeekDays(today, 7));
             else if (type == "monthly")
                 endDate = new Date(business.addWeekDays(today, 30));
-
+          
             const createSubs = await Subscription.create({
                 type,
                 price,
@@ -208,6 +203,7 @@ class UserController {
             const detailUser = await User.findByPk(id, {
                 include: [Subscription],
             });
+            if (!detailUser) throw { name: "notfound" };
             if (detailUser.SubscriptionId !== null) {
                 const schoolId = detailUser.Subscription.SchoolId;
                 const driverId = detailUser.Subscription.DriverId;
@@ -219,11 +215,10 @@ class UserController {
                     driver: driver,
                 });
             } else {
-                if (!detailUser) throw { message: "notfound" };
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
-            console.log(err);
+            console.log(err)
             next(err);
         }
     }
@@ -278,25 +273,23 @@ class UserController {
             next(err);
         }
     }
-
-    static async getDetailChat(req, res, next) {
-        try {
-            const { userId } = req.params;
-            const detailUser = await User.findOne({
-                where: { id: userId },
-                include: [
-                    {
-                        model: Subscription,
-                        include: [Driver],
-                    },
-                ],
-            });
-            if (!detailUser) throw { message: "notfound" };
-            res.status(200).json(detailUser);
-        } catch (err) {
-            next(err);
-        }
+    
+  static async getDetailChat(req, res, next) {
+    try {
+      const { userId } = req.params
+      const detailUser = await User.findOne({
+        where: { id: userId },
+        include: [{
+              model: Subscription,
+              include: [Driver]
+            }]
+        })
+      if (!detailUser) throw { name: "notfound" }
+      res.status(200).json(detailUser);
+    } catch (err) {
+      next(err);
     }
+  }
 }
 
 module.exports = UserController;
