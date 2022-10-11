@@ -1,6 +1,6 @@
 const app = require('../app');
 const request = require("supertest");
-const { User, School } = require('../models');
+const { User, School, Subscription } = require('../models');
 const {signToken} = require("../helpers/jwt");
 
 let access_token;
@@ -35,6 +35,9 @@ afterAll((done) => {
     User.destroy({ truncate: true, cascade: true, restartIdentity: true})
     .then(_ => {
     return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
+    })
+    .then(_ => {
+    return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
     })
     .then(() => {
     done();
@@ -278,12 +281,28 @@ describe("User Test", () => {
             });
         });
     
-        test("401 Failed Login - should return error", (done) => {
+        test("401 Failed Login - should return error if email not registered", (done) => {
           request(app)
             .post("/users/login")
             .send({
               email: "sample@gmail.com",
-              password: "inipassword",
+              password: "12345",
+            })
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Invalid email/password");
+              return done();
+            });
+        });
+
+        test("401 Failed Login - should return error if entered wrong password", (done) => {
+          request(app)
+            .post("/users/login")
+            .send({
+              email: "wanda@gmail.com",
+              password: "123456",
             })
             .end((err, res) => {
               if (err) return done(err);
@@ -309,6 +328,44 @@ describe("User Test", () => {
               return done();
             });
         });
+
+        test("404 Fail Read -- should return error if id is not in database", (done) => {
+          request(app)
+            .get("/users/balances/1000")
+            .set('access_token', access_token)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(404);
+              expect(body).toHaveProperty("message", "Data Not Found");
+              return done();
+            });
+        });
+
+        test("401 Fail Authenticate -- should return error message if there is no access_token", (done) => {
+          request(app)
+            .get("/users/balances/1")
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Unauthorized");
+              return done();
+            });
+        });
+
+        test("401 Fail Authenticate -- should return error message if access token not valid", (done) => {
+          request(app)
+            .get("/users/balances/1")
+            .set('access_token', access_token + 'aa')
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Invalid token");
+              return done();
+            });
+        });
     });
 
     //PATCH User Balance
@@ -328,26 +385,20 @@ describe("User Test", () => {
               return done();
             });
         });
-    });
 
-    //POST User Subsrciption
-    // describe("POST /users/subscriptions", () => {
-    //     test("201 Success Add -- should return success message", (done) => {
-    //       request(app)
-    //         .patch("/users/balances/1")
-    //         .send({
-    //             balance: 10000
-    //         })
-    //         .set('access_token', access_token)
-    //         .end((err, res) => {
-    //           if (err) return done(err);
-    //           const { body, status } = res;
-    //           expect(status).toBe(201);
-    //           expect(body).toHaveProperty("message", "success update balance with user id: 1");
-    //           return done();
-    //         });
-    //     });
-    // });
+        test("404 Fail Update -- should return error if id is not in database", (done) => {
+          request(app)
+            .patch("/users/balances/1000")
+            .set('access_token', access_token)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(404);
+              expect(body).toHaveProperty("message", "Data Not Found");
+              return done();
+            });
+        });
+    });
 
     //POST User School
     describe("POST /users/schools", () => {
@@ -442,4 +493,170 @@ describe("User Test", () => {
             });
         });
     });
+
+    //POST User Subscription
+    describe("POST /users/subscriptions", () => {
+        test("201 Success Add -- should return success message", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+                type: "weekly",
+                price: 200000,
+                goHomeTime: "14.00",
+                toShoolTime: "07.00",
+                DriverId: 1,
+                SchoolId: 1
+            })
+            .set('access_token', access_token)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(201);
+              expect(body).toHaveProperty("message", "success create subscription 1");
+              return done();
+            });
+        });
+
+        test("400 Failed Add -- should return error if type is null", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+              price: 200000
+            })
+            .set('access_token', access_token)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(400);
+              expect(body).toHaveProperty("message", "type is required");
+              return done();
+            });
+        });
+  
+        test("400 Failed Add -- should return error if price is null", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+              type: "weekly"
+            })
+            .set('access_token', access_token)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(400);
+              expect(body).toHaveProperty("message", "Price is required");
+              return done();
+            });
+        });
+    });
+
+    // GET User Subscription
+    describe("GET /users/subscriptions/:id", () => {
+      test("200 Success Read -- should return subscription detail", (done) => {
+        request(app)
+          .get("/users/subscriptions/1")
+          .set('access_token', access_token)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(200);
+            expect(body).toHaveProperty("id", expect.any(Number));
+            expect(body).toHaveProperty("type", expect.any(String));
+            expect(body).toHaveProperty("price", expect.any(Number));
+            expect(body).toHaveProperty("status", expect.any(String));
+            expect(body).toHaveProperty("startDate", expect.any(String));
+            expect(body).toHaveProperty("endDate", expect.any(String));
+            expect(body).toHaveProperty("goHomeTime", expect.any(String));
+            expect(body).toHaveProperty("toShoolTime", expect.any(String));
+            expect(body).toHaveProperty("SchoolId", expect.any(Number));
+            expect(body).toHaveProperty("DriverId", expect.any(Number));
+            expect(body).toHaveProperty("createdAt", expect.any(String));
+            expect(body).toHaveProperty("updatedAt", expect.any(String));
+            return done();
+          });
+      });
+
+      test("404 Failed Read -- should return error if id is not in database", (done) => {
+        request(app)
+          .get("/users/subscriptions/1000")
+          .set('access_token', access_token)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(404);
+            expect(body).toHaveProperty("message", "Data Not Found");
+            return done();
+          });
+      });
+  });
+
+  // PATCH User Subscription
+  describe("PATCH /users/subscriptions/:id", () => {
+    test("201 Success Update -- should return success message", (done) => {
+      request(app)
+        .patch("/users/subscriptions/1")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(201);
+          expect(body).toHaveProperty("message", "success update subscription with id: 1");
+          return done();
+        });
+    });
+
+    test("404 Failed Read -- should return error if id is not in database", (done) => {
+      request(app)
+        .patch("/users/subscriptions/1000")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(404);
+          expect(body).toHaveProperty("message", "Data Not Found");
+          return done();
+        });
+    });
+  });
+
+  // GET User Detail
+  describe("GET /users/:id", () => {
+    test("200 Success Read -- should return user detail", (done) => {
+      request(app)
+        .get("/users/1")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(200);
+          expect(body).toHaveProperty("id", expect.any(Number));
+          expect(body).toHaveProperty("fullName", expect.any(String));
+          expect(body).toHaveProperty("email", expect.any(String));
+          expect(body).toHaveProperty("password", expect.any(String));
+          expect(body).toHaveProperty("phoneNumber", expect.any(String));
+          expect(body).toHaveProperty("address", expect.any(String));
+          expect(body).toHaveProperty("latitude", expect.any(String));
+          expect(body).toHaveProperty("longitude", expect.any(String));
+          expect(body).toHaveProperty("childrenName", expect.any(String));
+          expect(body).toHaveProperty("balance", expect.any(Number));
+          expect(body).toHaveProperty("SubscriptionId", expect.any(Number));
+          expect(body).toHaveProperty("createdAt", expect.any(String));
+          expect(body).toHaveProperty("updatedAt", expect.any(String));
+          return done();
+        });
+    });
+
+    test("404 Failed Read -- should return error if id is not in database", (done) => {
+      request(app)
+        .get("/users/1000")
+        .set('access_token', access_token)
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(404);
+          expect(body).toHaveProperty("message", "Data Not Found");
+          return done();
+        });
+    });
+  });
 });

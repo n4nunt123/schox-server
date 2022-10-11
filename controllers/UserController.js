@@ -2,6 +2,8 @@ const {comparePassword} = require("../helpers/bcrypt");
 const {signToken} = require("../helpers/jwt");
 const { User, School, Subscription } = require("../models");
 const { sequelize } = require("../models");
+const moment = require('moment')
+const business = require('moment-business');
 
 class UserController {
     static async register(req, res, next) {
@@ -70,17 +72,19 @@ class UserController {
         try {
             const { userId } = req.params
             const findUser = await User.findByPk(userId)
+            if (!findUser) throw { name: "notfound" }
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
-            console.log(err)
             next(err);
         }
     }
     static async updateBalance(req, res, next) {
         try {
             const { userId } = req.params
+            const findUser = await User.findByPk(userId)
+            if (!findUser) throw { name: "notfound" }
             const { balance } = req.body
-            await User.update({balance}, {where: { id: userId }})
+            await User.update({balance}, {where: { id: findUser.id }})
             res.status(201).json({ message: "success update balance with user id: " + userId });
         } catch (err) {
             next(err);
@@ -88,40 +92,23 @@ class UserController {
     }
 
     static async postSubscription(req, res, next) {
-        const t = await sequelize.transaction();
+        const today = moment();
         try {
             const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
             const { id } = req.user
             let startDate = new Date()
-            // let currtDate = new Date()
             let endDate = new Date()
 
-            //TODO dayJS
-            if (type == "weekly") endDate = new Date(endDate.setDate(startDate.getDate() + 7)) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
-            else if (type == "monthly") endDate = new Date(endDate.setDate(startDate.getDate() + 30))
-
+            if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7))
+            else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30))
 
             const createSubs = await Subscription.create({
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
-            }, { transaction: t })
-
-            console.log(createSubs)
-            // let userFound = await User.findByPk({
-            //     where: {id}
-            // });
-            // await userFound.update({
-            //     SubscriptionId: createSubs.id
-            // });
-            // console.log(id)
-            // console.log(createSubs.id)
+            })
             await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
-
-            t.commit();
             res.status(201).json({ message: "success create subscription " + createSubs.id });
         } catch (err) {
-            console.log(err)
-            t.rollback()
             next(err);
         }
     }
@@ -129,15 +116,21 @@ class UserController {
         try {
             const { id } = req.params
             const detailSubs = await Subscription.findByPk(id)
-            if (!detailSubs) throw { message: "notfound" }
+            if (!detailSubs) throw { name: "notfound" }
             res.status(200).json(detailSubs);
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
     static async updateSubscription(req, res, next) {
         try {
-            res.status(201).json({ message: "updateSubscription" });
+            const { id } = req.params;
+            const detailSubs = await Subscription.findByPk(id);
+            if (!detailSubs) throw { name: "notfound" };
+            const status = 'nonactive'
+            await Subscription.update({status}, {where: { id: detailSubs.id }})
+            res.status(201).json({ message: "success update subscription with id: " + detailSubs.id });
         } catch (err) {
             next(err);
         }
@@ -147,7 +140,7 @@ class UserController {
         try {
             const { id } = req.params
             const detailUser = await User.findByPk(id)
-            if (!detailUser) throw { message: "notfound" }
+            if (!detailUser) throw { name: "notfound" }
             res.status(200).json(detailUser);
         } catch (err) {
             console.log(err)

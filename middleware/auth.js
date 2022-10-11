@@ -11,13 +11,8 @@ async function authz(req, res, next) {
     req.user = { id: user.id };
     next();
   } catch (err) {
-    if (err.name == "JsonWebTokenError") {
-      res.status(401).json({ message: "Invalid token" });
-    } else if (err.name == "Unauthorized") {
-      res.status(401).json({ message: "Invalid token" });
-    } else {
-      res.status(500).json({ message: "Internal server error" });
-    }
+    console.log(err)
+    next(err);
   }
 }
 
