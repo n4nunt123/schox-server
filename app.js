@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
 
   socket.on('send:interval', (data) => {
     console.log(data)
-    socket.broadcast.emit('recieve:interval', data)
+    socket.emit('recieve:interval', data)
   })
     
   socket.on('disconnect', () => {

@@ -1,6 +1,6 @@
 const {comparePassword} = require('../helpers/bcrypt');
 const {signToken} = require('../helpers/jwt');
-const { Driver } = require('../models');
+const { Driver, User, Subscription } = require('../models');
 
 class DriverController {
 
@@ -49,6 +49,25 @@ class DriverController {
             res.status(200).json(driver)
         } catch (err) {
             next(err)
+        }
+    }
+
+    static async getDetailChat(req, res, next) {
+        try {
+            const { id } = req.params
+            console.log(id)
+            const detailDriver = await Driver.findOne({
+                where: { id },
+                include: [{
+                    model: Subscription,
+                    include: [User]
+                }]
+            })
+            if (!detailDriver) throw { message: "notfound" }
+            res.status(200).json(detailDriver);
+        } catch (err) {
+            console.log(err)
+            next(err);
         }
     }
 }

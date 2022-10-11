@@ -1,6 +1,6 @@
 const {comparePassword} = require("../helpers/bcrypt");
 const {signToken} = require("../helpers/jwt");
-const { User, School, Subscription } = require("../models");
+const { User, School, Subscription, Driver } = require("../models");
 const { sequelize } = require("../models");
 
 class UserController {
@@ -45,8 +45,9 @@ class UserController {
             const payload = { id: findUser.id }
             const access_token = signToken(payload)
 
-            res.status(200).json({ access_token });
+            res.status(200).json({ id: findUser.id , access_token });
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
@@ -61,7 +62,7 @@ class UserController {
     static async getBalance(req, res, next) {
         try {
             const { userId } = req.params
-            const findUser = await User.findById(userId)
+            const findUser = await User.findByPk(userId)
             res.status(200).json({ balance: findUser.balance });
         } catch (err) {
             next(err);
@@ -105,7 +106,7 @@ class UserController {
     static async getSubscription(req, res, next) {
         try {
             const { id } = req.params
-            const detailSubs = await Subscription.findById(id)
+            const detailSubs = await Subscription.findByPk(id)
             if (!detailSubs) throw { message: "notfound" }
             res.status(200).json(detailSubs);
         } catch (err) {
@@ -123,10 +124,12 @@ class UserController {
     static async getUserDetail(req, res, next) {
         try {
             const { id } = req.params
-            const detailUser = await User.findById(id)
+            console.log(id)
+            const detailUser = await User.findByPk(id)
             if (!detailUser) throw { message: "notfound" }
             res.status(200).json(detailUser);
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
@@ -136,6 +139,24 @@ class UserController {
             const { id } = req.params
         } catch (err) {
             next(err)
+        }
+    }
+
+    static async getDetailChat(req, res, next) {
+        try {
+            const { userId } = req.params
+            const detailUser = await User.findOne({
+                where: { id: userId },
+                include: [{
+                    model: Subscription,
+                    include: [Driver]
+                }]
+            })
+            if (!detailUser) throw { message: "notfound" }
+            res.status(200).json(detailUser);
+        } catch (err) {
+            console.log(err)
+            next(err);
         }
     }
 }
