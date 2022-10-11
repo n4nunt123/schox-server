@@ -6,16 +6,14 @@ user.post("/register", UserController.register);
 user.post("/login", UserController.login);
 user.post("/balances", UserController.postBalance);
 
-
-user.get('/chat/:userId', UserController.getDetailChat) // untuk chat
-
+user.get("/chat/:userId", UserController.getDetailChat); // untuk chat
 
 user.use(authz);
 
 user.post("/schools", UserController.postSchool);
 user.get("/schools", UserController.getSchools);
 user.post("/subscriptions", UserController.postSubscription);
-// user.post("/balances", UserController.postBalances)
+// user.post("/balances", UserController.postBalance);
 user.get("/balances/:userId", UserController.getBalance);
 
 user.get("/subscriptions/:id", UserController.getSubscription);

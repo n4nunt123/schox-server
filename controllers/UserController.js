@@ -92,6 +92,7 @@ class UserController {
 
   static async postBalance(req, res, next) {
     try {
+      console.log(req.body);
       const check = req.body;
       const transId = check.order_id.split("-");
       transId.splice(1, 1);
@@ -165,11 +166,9 @@ class UserController {
       if (!detailSubs) throw { name: "notfound" };
       const status = "nonactive";
       await Subscription.update({ status }, { where: { id: detailSubs.id } });
-      res
-        .status(201)
-        .json({
-          message: "success update subscription with id: " + detailSubs.id,
-        });
+      res.status(201).json({
+        message: "success update subscription with id: " + detailSubs.id,
+      });
     } catch (err) {
       next(err);
     }
