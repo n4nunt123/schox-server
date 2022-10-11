@@ -1,6 +1,6 @@
 const app = require('../app');
 const request = require("supertest");
-const { User, School, Subscription } = require('../models');
+const { User, School, Subscription, TopUp } = require('../models');
 const {signToken} = require("../helpers/jwt");
 
 let access_token;
@@ -45,31 +45,41 @@ beforeAll((done) => {
       return User.create(user)
     })
     .then((result) => {
-        const payload = {
-            id: result.id
-        };
-        access_token = signToken(payload);
-        done();
+      const payload = {
+        id: result.id
+      };
+      access_token = signToken(payload);
+      
+      const gross = 5000000
+      TopUp.create({
+        gross,
+        UserId: result.id,
+        status: 'pending'
+      })
+      done();
     })
     .catch((err) => {
-    done(err);
+      done(err);
     });;
 });
 
 afterAll((done) => {
     User.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    .then(_ => {
-    return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    })
-    .then(_ => {
-    return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    })
-    .then(() => {
-    done();
-    })
-    .catch((err) => {
-    done(err);
-    });
+      .then(_ => {
+        return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(_ => {
+        return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(_ => {
+        return TopUp.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(() => {
+        done();
+      })
+      .catch((err) => {
+        done(err);
+      });
 });
 
 describe("User Test", () => {
@@ -397,7 +407,7 @@ describe("User Test", () => {
     });
 
     //! PATCH User Balance
-    describe('PATCH /user/balances/:userId', () => {
+    describe('PATCH /users/balances/:userId', () => {
       test("200 Success Read -- should return user balance", (done) => {
         const balance = '1000000'
         request(app)
@@ -445,57 +455,63 @@ describe("User Test", () => {
 
     // POST User Topup
     describe('POST /user/topup', () => {
-      test("201 Success Topup -- should return success message", (done) => {
+      test("200 Success transaction -- should return message success topup", (done) => {
+        const gross = '5000000'
+
         request(app)
           .post("/users/topup")
-          .send({
-            gross: "100000",
-          })
           .set('access_token', access_token)
+          .send({ gross })
           .end((err, res) => {
             if (err) return done(err);
             const { body, status } = res;
             expect(status).toBe(201);
-            expect(body).toHaveProperty("token");
-            expect(body).toHaveProperty("redirect_url");
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("token", expect.any(String));
+            expect(body).toHaveProperty("redirect_url", expect.any(String));
             return done();
           });
       });
     })
 
     // POST User Balance
-    describe('POST /user/balances', () => {
-      // {
-      //   transaction_time: '2022-10-12 01:13:21',
-      //   transaction_status: 'capture',
-      //   transaction_id: '813b7054-b8c8-4af4-a521-3c6b922b1cae',
-      //   three_ds_version: '1',
-      //   status_message: 'midtrans payment notification',
-      //   status_code: '200',
-      //   signature_key: '6ed10fe994ec362f66bae95cdcd3269087483c0fb447a947d83702d0b71e84fc594daea17f193d0ae85bd86dc2807ea2ce3a4a581bc32aa1f084eecf8ef96b58',
-      //   payment_type: 'credit_card',
-      //   order_id: '14-1665511555227',
-      //   merchant_id: 'G007288218',
-      //   masked_card: '48111111-1114',
-      //   gross_amount: '100000.00',
-      //   fraud_status: 'accept',
-      //   eci: '05',
-      //   currency: 'IDR',
-      //   channel_response_message: 'Approved',
-      //   channel_response_code: '00',
-      //   card_type: 'credit',
-      //   bank: 'bni',
-      //   approval_code: '1665512016321'
-      // }
-      test.skip("200 Success Post Balance -- should return success message", (done) => {
+    describe('POST /users/balances', () => {
+      test("200 Success TopUp -- should return message success topup", (done) => {
+        const check = {
+          transaction_status: 'capture',
+          gross_amount: '5000000',
+          order_id: '1-1665508477051',
+        }
+
         request(app)
           .post("/users/balances")
-          .send({})
+          .send(check)
           .end((err, res) => {
             if (err) return done(err);
             const { body, status } = res;
             expect(status).toBe(200);
-            expect(body).toHaveProperty("message");
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("message", expect.any(String));
+            return done();
+          });
+      });
+      
+      test("200 Failed TopUp -- should return message topup failed", (done) => {
+        const check = {
+          transaction_status: 'deny',
+          gross_amount: '5000000',
+          order_id: '1-1665508477051',
+        }
+
+        request(app)
+          .post("/users/balances")
+          .send(check)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(200);
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("message", 'top up failed');
             return done();
           });
       });
