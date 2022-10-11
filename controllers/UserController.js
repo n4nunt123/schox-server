@@ -35,17 +35,17 @@ class UserController {
                 email: createUser.email,
             });
         } catch (err) {
-            //   next(err);
-            console.log(err);
+            next(err);
         }
     }
+
     static async login(req, res, next) {
         try {
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
-            if (!findUser) throw { name: "invalid_email/pass" };
+            if (!findUser) throw { name: "invalid_email/password" };
             const compare = comparePassword(password, findUser.password);
-            if (!compare) throw { name: "invalid_email/pass" };
+            if (!compare) throw { name: "invalid_email/password" };
 
             const payload = { id: findUser.id };
             const access_token = signToken(payload);
@@ -55,7 +55,6 @@ class UserController {
                 id: findUser.id,
             });
         } catch (err) {
-            console.log(err);
             next(err);
         }
     }
@@ -127,11 +126,10 @@ class UserController {
                 res.status(201).json(transaction);
             });
         } catch (err) {
-            console.log(err)
+            console.log(err);
             next(err);
         }
     }
-
 
     static async postBalance(req, res, next) {
         try {
@@ -168,12 +166,12 @@ class UserController {
 
     static async updateBalance(req, res, next) {
         try {
-            const { userId } = req.params
-            const { balance } = req.body
-            await User.update({ balance }, {where: { id: userId }})
-            res.status(200).json({ message: "success update balance" })
+            const { userId } = req.params;
+            const { balance } = req.body;
+            await User.update({ balance }, { where: { id: userId } });
+            res.status(200).json({ message: "success update balance" });
         } catch (err) {
-            next(err)
+            next(err);
         }
     }
 
@@ -184,7 +182,7 @@ class UserController {
                 req.body;
             const { id } = req.user;
             let startDate = new Date();
-            let endDate
+            let endDate;
 
             if (type == "weekly")
                 endDate = new Date(business.addWeekDays(today, 7));
@@ -248,6 +246,7 @@ class UserController {
             const detailUser = await User.findByPk(id, {
                 include: [Subscription],
             });
+            if (!detailUser) throw { name: "notfound" };
             if (detailUser.SubscriptionId !== null) {
                 const schoolId = detailUser.Subscription.SchoolId;
                 const driverId = detailUser.Subscription.DriverId;
@@ -259,7 +258,6 @@ class UserController {
                     driver: driver,
                 });
             } else {
-                if (!detailUser) throw { message: "notfound" };
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
