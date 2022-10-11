@@ -92,9 +92,49 @@ class UserController {
         }
     }
 
+    static async topUp(req, res, next) {
+        try {
+            const gross = req.body.gross;
+
+            let snap = new midtransClient.Snap({
+                isProduction: false,
+                serverKey: "SB-Mid-server-MKMNsq6bOP7MUmjxT6sC3z7_",
+            });
+            const id = new Date().getTime();
+            const topUp = await TopUp.create({
+                gross,
+                UserId: req.user.id,
+                status: "pending",
+            });
+
+            let parameter = {
+                transaction_details: {
+                    order_id: topUp.id + `-${id}`,
+                    gross_amount: gross,
+                },
+                credit_card: {
+                    secure: true,
+                },
+                customer_details: {
+                    first_name: "John",
+                    last_name: "Doe",
+                    email: "test@mail.com",
+                    phone: "081111111",
+                },
+            };
+
+            snap.createTransaction(parameter).then((transaction) => {
+                res.status(201).json(transaction);
+            });
+        } catch (err) {
+            console.log(err)
+            next(err);
+        }
+    }
+
+
     static async postBalance(req, res, next) {
         try {
-            console.log(req.body);
             const check = req.body;
             const transId = check.order_id.split("-");
             transId.splice(1, 1);
@@ -224,57 +264,6 @@ class UserController {
             }
         } catch (err) {
             console.log(err);
-            next(err);
-        }
-    }
-
-    // static async updateUser(req, res, next) {
-    //     try {
-    //         const { id } = req.params
-    //         const { SubscriptionId } = req.body
-    //         await User.update({ SubscriptionId }, { where: { id }})
-    //         res.status(200).json({ message: "success update user" })
-    //     } catch (err) {
-    //         next(err)
-    //     }
-    // }
-
-    static async topUp(req, res, next) {
-        try {
-            const gross = req.body.gross;
-
-            let snap = new midtransClient.Snap({
-                isProduction: false,
-                serverKey: "SB-Mid-server-degeBoSA2XjP6Yf9u6u8wMLL",
-            });
-            const id = new Date().getTime();
-            const topUp = await TopUp.create({
-                gross,
-                UserId: req.user.id,
-                status: "pending",
-            });
-
-            let parameter = {
-                transaction_details: {
-                    order_id: topUp.id + `-${id}`,
-                    gross_amount: gross,
-                },
-                credit_card: {
-                    secure: true,
-                },
-                customer_details: {
-                    first_name: "hahahaha",
-                    last_name: "",
-                    email: "test@mail.com",
-                    phone: "087777777",
-                },
-            };
-
-            snap.createTransaction(parameter).then((transaction) => {
-                res.status(201).json(transaction);
-            });
-        } catch (err) {
-            console.log(err)
             next(err);
         }
     }
