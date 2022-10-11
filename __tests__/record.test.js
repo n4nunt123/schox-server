@@ -1,15 +1,101 @@
-const request = require('supertest')
-const app = require('../app')
-
+const app = require('../app');
+const request = require("supertest");
+const { User, School, Subscription, ShuttleRecord } = require('../models');
+const { sequelize } = require('../models');
+const driver = require('../routes/driver');
 
 // ID driver sample yang ceritanya dah punya subscription
-const driverId = 1
+let driverId = 1
 // ID driver sample yang kga punya subscription
-const driverIdNoSub = 2
+let driverIdNoSub = 2
 // ID SHUTTLE RECORD TYPE PICKUP
-const idPickup = 1
+let idPickup = 1
 // ID SHUTTLE RECORD TYPE DELIVER
-const idDeliver = 2
+let idDeliver = 2
+
+const user = {
+  fullName: "Maria Mercedes",
+  email: "mercedes@gmail.com",
+  password: "12345",
+  phoneNumber: "08123456789",
+  address: "Jalan Pegangsaan Timur No. 56",
+  latitude: "-6.203988",
+  longitude: "106.845031",
+  childrenName: "Rosalinda",
+  SubscriptionId: 1,
+  balance: 0
+};
+
+const school = {
+  name: 'Highschool of nowhere',
+  address: 'Classified information',
+  latitude: 'Classified information',
+  longitude: 'Classified information'
+}
+
+const sub = {
+  type: 'Classified information',
+  price: 696969,
+  status: 'Classified information',
+  startDate: new Date(),
+  endDate: new Date(),
+  goHomeTime: 'Classified information',
+  toShoolTime: 'Classified information',
+  SchoolId: 1,
+  DriverId: 1
+}
+
+
+beforeAll((done) => {
+  School.create(school)
+    .then(_ => {
+      return Subscription.create(sub)
+    })
+    .then(_ => {
+      return User.create(user)
+    })
+    .then(_ => {
+      return ShuttleRecord.create({
+        status: 'Departed',
+        type: 'Pick up',
+        driverPickupAt: new Date(),
+        SubscriptionId: driverId
+      })
+    })
+    .then(_ => {
+      return ShuttleRecord.create({
+        status: 'Departed',
+        type: 'Deliver',
+        driverPickupAt: new Date(),
+        SubscriptionId: driverId
+      })
+    })
+    .then(_ => {
+      done()
+    })
+    .catch(err => {
+      done(err);
+    });;
+});
+
+afterAll((done) => {
+  User.destroy({ truncate: true, cascade: true, restartIdentity: true})
+  .then(_ => {
+    return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
+  })
+  .then(_ => {
+    return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
+  })
+  .then(_ => {
+    return ShuttleRecord.destroy({ truncate: true, cascade: true, restartIdentity: true})
+  })
+  .then(() => {
+    done();
+  })
+  .catch((err) => {
+    done(err);
+  });
+});
 
 
 // PICKUP TEST
