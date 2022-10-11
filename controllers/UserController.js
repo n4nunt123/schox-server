@@ -1,9 +1,10 @@
 const { comparePassword } = require("../helpers/bcrypt");
 const { signToken } = require("../helpers/jwt");
-const { User, School, Subscription, TopUp } = require("../models");
+const { User, School, Subscription, Driver, TopUp } = require("../models");
 const moment = require("moment");
 const business = require("moment-business");
 const midtransClient = require("midtrans-client");
+const { sequelize } = require("../models");
 
 class UserController {
   static async register(req, res, next) {
@@ -80,12 +81,15 @@ class UserController {
     try {
       const { userId } = req.params;
       const findUser = await User.findByPk(userId);
+
+      if (!findUser) throw { name: "notfound" };
+
       res.status(200).json({ balance: findUser.balance });
     } catch (err) {
-      console.log(err);
       next(err);
     }
   }
+
   static async postBalance(req, res, next) {
     try {
       const check = req.body;
@@ -119,7 +123,6 @@ class UserController {
         req.body;
       const { id } = req.user;
       let startDate = new Date();
-      // let currtDate = new Date()
       let endDate = new Date();
 
       if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7));
@@ -149,7 +152,7 @@ class UserController {
     try {
       const { id } = req.params;
       const detailSubs = await Subscription.findByPk(id);
-      if (!detailSubs) throw { message: "notfound" };
+      if (!detailSubs) throw { name: "notfound" };
       res.status(200).json(detailSubs);
     } catch (err) {
       next(err);
@@ -157,7 +160,16 @@ class UserController {
   }
   static async updateSubscription(req, res, next) {
     try {
-      res.status(201).json({ message: "updateSubscription" });
+      const { id } = req.params;
+      const detailSubs = await Subscription.findByPk(id);
+      if (!detailSubs) throw { name: "notfound" };
+      const status = "nonactive";
+      await Subscription.update({ status }, { where: { id: detailSubs.id } });
+      res
+        .status(201)
+        .json({
+          message: "success update subscription with id: " + detailSubs.id,
+        });
     } catch (err) {
       next(err);
     }
@@ -167,7 +179,7 @@ class UserController {
     try {
       const { id } = req.params;
       const detailUser = await User.findByPk(id);
-      if (!detailUser) throw { message: "notfound" };
+      if (!detailUser) throw { name: "notfound" };
       res.status(200).json(detailUser);
     } catch (err) {
       console.log(err);
@@ -220,6 +232,25 @@ class UserController {
       snap.createTransaction(parameter).then((transaction) => {
         res.status(201).json(transaction);
       });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getDetailChat(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const detailUser = await User.findOne({
+        where: { id: userId },
+        include: [
+          {
+            model: Subscription,
+            include: [Driver],
+          },
+        ],
+      });
+      if (!detailUser) throw { message: "notfound" };
+      res.status(200).json(detailUser);
     } catch (err) {
       next(err);
     }

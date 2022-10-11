@@ -12,3 +12,6 @@ endDate = startDate.setDate(startDate.getDate() + 30)
 
 console.log(startDate.setDate((startDate.getDate() + 8)))
 console.log(new Date(endDate))
+
+if (type == "weekly") endDate = new Date(endDate.setDate(startDate.getDate() + 7)) // disini harusnya dipikirin gimana kalo ditengah subs ada hari minggu
+else if (type == "monthly") endDate = new Date(endDate.setDate(startDate.getDate() + 30))
