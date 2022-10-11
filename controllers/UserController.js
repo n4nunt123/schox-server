@@ -4,6 +4,7 @@ const { User, School, Subscription } = require("../models");
 const moment = require("moment");
 const business = require("moment-business");
 const midtransClient = require("midtrans-client");
+const { sequelize } = require("../models");
 
 class UserController {
   static async register(req, res, next) {
@@ -75,96 +76,85 @@ class UserController {
     }
   }
 
-  static async getBalance(req, res, next) {
-    try {
-      const { userId } = req.params;
-      const findUser = await User.findByPk(userId);
-      res.status(200).json({ balance: findUser.balance });
-    } catch (err) {
-      console.log(err);
-      next(err);
+    static async getBalance(req, res, next) {
+        try {
+            const { userId } = req.params
+            const findUser = await User.findByPk(userId)
+            if (!findUser) throw { name: "notfound" }
+            res.status(200).json({ balance: findUser.balance });
+        } catch (err) {
+            next(err);
+        }
     }
-  }
-  static async updateBalance(req, res, next) {
-    try {
-      const id = req.user.id;
-      const user = await User.findByPk(id);
-      const balance = user.balance;
-      console.log(balance);
-      //   console.log(req.body);
-      //   const { userId } = req.params;
-      //   const { balance } = req.body;
-      //   await User.update({ balance }, { where: { id: userId } });
-      //   res
-      //     .status(201)
-      //     .json({ message: "success update balance with user id: " + userId });
-    } catch (err) {
-      next(err);
+    static async updateBalance(req, res, next) {
+        try {
+            const { userId } = req.params
+            const findUser = await User.findByPk(userId)
+            if (!findUser) throw { name: "notfound" }
+            const { balance } = req.body
+            await User.update({balance}, {where: { id: findUser.id }})
+            res.status(201).json({ message: "success update balance with user id: " + userId });
+        } catch (err) {
+            next(err);
+        }
     }
-  }
 
-  static async postSubscription(req, res, next) {
-    const today = moment();
-    try {
-      const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } =
-        req.body;
-      const { id } = req.user;
-      let startDate = new Date();
-      // let currtDate = new Date()
-      let endDate = new Date();
+    static async postSubscription(req, res, next) {
+        const today = moment();
+        try {
+            const { type, price, goHomeTime, toShoolTime, DriverId, SchoolId } = req.body
+            const { id } = req.user
+            let startDate = new Date()
+            let endDate = new Date()
 
-      if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7));
-      else if (type == "monthly")
-        endDate = new Date(business.addWeekDays(today, 30));
+            if (type == "weekly") endDate = new Date(business.addWeekDays(today, 7))
+            else if (type == "monthly") endDate = new Date(business.addWeekDays(today, 30))
 
-      const createSubs = await Subscription.create({
-        type,
-        price,
-        goHomeTime,
-        toShoolTime,
-        DriverId,
-        SchoolId,
-        startDate,
-        endDate,
-        status: "active",
-      });
-      await User.update({ SubscriptionId: createSubs.id }, { where: { id } });
-      res
-        .status(201)
-        .json({ message: "success create subscription " + createSubs.id });
-    } catch (err) {
-      next(err);
+            const createSubs = await Subscription.create({
+                type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
+                status: "active"
+            })
+            await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
+            res.status(201).json({ message: "success create subscription " + createSubs.id });
+        } catch (err) {
+            next(err);
+        }
     }
-  }
-  static async getSubscription(req, res, next) {
-    try {
-      const { id } = req.params;
-      const detailSubs = await Subscription.findByPk(id);
-      if (!detailSubs) throw { message: "notfound" };
-      res.status(200).json(detailSubs);
-    } catch (err) {
-      next(err);
+    static async getSubscription(req, res, next) {
+        try {
+            const { id } = req.params
+            const detailSubs = await Subscription.findByPk(id)
+            if (!detailSubs) throw { name: "notfound" }
+            res.status(200).json(detailSubs);
+        } catch (err) {
+            console.log(err)
+            next(err);
+        }
     }
-  }
-  static async updateSubscription(req, res, next) {
-    try {
-      res.status(201).json({ message: "updateSubscription" });
-    } catch (err) {
-      next(err);
+    static async updateSubscription(req, res, next) {
+        try {
+            const { id } = req.params;
+            const detailSubs = await Subscription.findByPk(id);
+            if (!detailSubs) throw { name: "notfound" };
+            const status = 'nonactive'
+            await Subscription.update({status}, {where: { id: detailSubs.id }})
+            res.status(201).json({ message: "success update subscription with id: " + detailSubs.id });
+        } catch (err) {
+            next(err);
+        }
     }
-  }
 
-  static async getUserDetail(req, res, next) {
-    try {
-      const { id } = req.params;
-      const detailUser = await User.findByPk(id);
-      if (!detailUser) throw { message: "notfound" };
-      res.status(200).json(detailUser);
-    } catch (err) {
-      console.log(err);
-      next(err);
+    static async getUserDetail(req, res, next) {
+        try {
+            const { id } = req.params
+            const detailUser = await User.findByPk(id)
+            if (!detailUser) throw { name: "notfound" }
+            res.status(200).json(detailUser);
+        } catch (err) {
+            console.log(err)
+            next(err);
+        }
     }
-  }
 
   // static async updateUser(req, res, next) {
   //     try {
