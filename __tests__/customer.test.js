@@ -1,6 +1,6 @@
 const app = require('../app');
 const request = require("supertest");
-const { User, School, Subscription } = require('../models');
+const { User, School, Subscription, TopUp } = require('../models');
 const {signToken} = require("../helpers/jwt");
 
 let access_token;
@@ -45,31 +45,41 @@ beforeAll((done) => {
       return User.create(user)
     })
     .then((result) => {
-        const payload = {
-            id: result.id
-        };
-        access_token = signToken(payload);
-        done();
+      const payload = {
+        id: result.id
+      };
+      access_token = signToken(payload);
+      
+      const gross = 5000000
+      TopUp.create({
+        gross,
+        UserId: result.id,
+        status: 'pending'
+      })
+      done();
     })
     .catch((err) => {
-    done(err);
+      done(err);
     });;
 });
 
 afterAll((done) => {
     User.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    .then(_ => {
-    return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    })
-    .then(_ => {
-    return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
-    })
-    .then(() => {
-    done();
-    })
-    .catch((err) => {
-    done(err);
-    });
+      .then(_ => {
+        return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(_ => {
+        return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(_ => {
+        return TopUp.destroy({ truncate: true, cascade: true, restartIdentity: true})
+      })
+      .then(() => {
+        done();
+      })
+      .catch((err) => {
+        done(err);
+      });
 });
 
 describe("User Test", () => {
@@ -397,7 +407,7 @@ describe("User Test", () => {
     });
 
     //! PATCH User Balance
-    describe('PATCH /user/balances/:userId', () => {
+    describe('PATCH /users/balances/:userId', () => {
       test("200 Success Read -- should return user balance", (done) => {
         const balance = '1000000'
         request(app)
@@ -443,9 +453,68 @@ describe("User Test", () => {
       });
     })
 
-    // POST User Balance
-    describe('POST /user/balances', () => {
+    // POST User Topup
+    describe('POST /user/topup', () => {
+      test("200 Success transaction -- should return message success topup", (done) => {
+        const gross = '5000000'
 
+        request(app)
+          .post("/users/topup")
+          .set('access_token', access_token)
+          .send({ gross })
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(201);
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("token", expect.any(String));
+            expect(body).toHaveProperty("redirect_url", expect.any(String));
+            return done();
+          });
+      });
+    })
+
+    // POST User Balance
+    describe('POST /users/balances', () => {
+      test("200 Success TopUp -- should return message success topup", (done) => {
+        const check = {
+          transaction_status: 'capture',
+          gross_amount: '5000000',
+          order_id: '1-1665508477051',
+        }
+
+        request(app)
+          .post("/users/balances")
+          .send(check)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(200);
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("message", expect.any(String));
+            return done();
+          });
+      });
+      
+      test("200 Failed TopUp -- should return message topup failed", (done) => {
+        const check = {
+          transaction_status: 'deny',
+          gross_amount: '5000000',
+          order_id: '1-1665508477051',
+        }
+
+        request(app)
+          .post("/users/balances")
+          .send(check)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(200);
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("message", 'top up failed');
+            return done();
+          });
+      });
     })
 
     //! POST User School
