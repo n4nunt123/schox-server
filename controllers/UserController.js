@@ -87,10 +87,12 @@ class UserController {
   }
   static async updateBalance(req, res, next) {
     try {
+      console.log(req.body);
       const id = req.user.id;
       const user = await User.findByPk(id);
       const balance = user.balance;
       console.log(balance);
+
       //   console.log(req.body);
       //   const { userId } = req.params;
       //   const { balance } = req.body;
