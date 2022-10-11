@@ -74,7 +74,7 @@ afterAll((done) => {
 
 describe("User Test", () => {
 
-    //POST User Register
+    //? POST User Register
     describe("POST /users/register", () => {
       test("201 Success Register -- should create new user", (done) => {
         request(app)
@@ -269,7 +269,7 @@ describe("User Test", () => {
       });
     });
 
-    //POST User Login
+    //? POST User Login
     describe("POST /users/login", () => {
         test("200 Success Login -- should return access token", (done) => {
           request(app)
@@ -317,7 +317,7 @@ describe("User Test", () => {
         });
     });
 
-    // GET User Balance
+    //! GET User Balance
     describe("GET /users/balances/:userId", () => {
         test("200 Success Read -- should return user balance", (done) => {
           request(app)
@@ -328,6 +328,31 @@ describe("User Test", () => {
               const { body, status } = res;
               expect(status).toBe(200);
               expect(body).toHaveProperty("balance", expect.any(Number));
+              return done();
+            });
+        });
+        
+        test("401 Failed invalid access_token -- should return error", (done) => {
+          request(app)
+            .get("/users/balances/1")
+            .set('access_token', 'wrong_token')
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Invalid token");
+              return done();
+            });
+        });
+        
+        test("401 Failed no access_token -- should return error", (done) => {
+          request(app)
+            .get("/users/balances/1")
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Unauthorized");
               return done();
             });
         });
@@ -371,7 +396,59 @@ describe("User Test", () => {
         });
     });
 
-    //POST User School
+    //! PATCH User Balance
+    describe('PATCH /user/balances/:userId', () => {
+      test("200 Success Read -- should return user balance", (done) => {
+        const balance = '1000000'
+        request(app)
+          .patch("/users/balances/1")
+          .set('access_token', access_token)
+          .send(balance)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(200);
+            expect(body).toHaveProperty("message", "success update balance");
+            return done();
+          });
+      });
+
+      test("401 failed wrong token -- should return error", (done) => {
+        const balance = '1000000'
+        request(app)
+          .patch("/users/balances/1")
+          .set('access_token', 'wrong token')
+          .send(balance)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(401);
+            expect(body).toHaveProperty("message", "Invalid token");
+            return done();
+          });
+      });
+
+      test("401 failed no token -- should return error", (done) => {
+        const balance = '1000000'
+        request(app)
+          .patch("/users/balances/1")
+          .send(balance)
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(401);
+            expect(body).toHaveProperty("message", "Unauthorized");
+            return done();
+          });
+      });
+    })
+
+    // POST User Balance
+    describe('POST /user/balances', () => {
+
+    })
+
+    //! POST User School
     describe("POST /users/schools", () => {
         test("201 Success Add -- should return success message", (done) => {
           request(app)
@@ -465,7 +542,7 @@ describe("User Test", () => {
         });
     });
 
-    // GET User School
+    //! GET User School
     describe('GET /users/schools', () => {
       test('200 Success Get -- should return schools', (done) => {
         request(app)
@@ -480,7 +557,7 @@ describe("User Test", () => {
       })
     })
 
-    //POST User Subscription
+    //! POST User Subscription
     describe("POST /users/subscriptions", () => {
         test("201 Success Add -- should return success message", (done) => {
           request(app)
@@ -499,6 +576,47 @@ describe("User Test", () => {
               const { body, status } = res;
               expect(status).toBe(201);
               expect(body).toHaveProperty("message", "success create subscription 2");
+              return done();
+            });
+        });
+        
+        test("401 Failed access_token does not match -- should return error", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+                type: "weekly",
+                price: 200000,
+                goHomeTime: "14.00",
+                toShoolTime: "07.00",
+                DriverId: 1,
+                SchoolId: 1
+            })
+            .set('access_token', 'wrong_token')
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Invalid token");
+              return done();
+            });
+        });
+        
+        test("401 Failed access_token does not exist -- should return error", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+                type: "weekly",
+                price: 200000,
+                goHomeTime: "14.00",
+                toShoolTime: "07.00",
+                DriverId: 1,
+                SchoolId: 1
+            })
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Unauthorized");
               return done();
             });
         });
@@ -536,7 +654,7 @@ describe("User Test", () => {
         });
     });
 
-    // GET User Subscription
+    //! GET User Subscription
     describe("GET /users/subscriptions/:id", () => {
       test("200 Success Read -- should return subscription detail", (done) => {
         request(app)
@@ -574,9 +692,34 @@ describe("User Test", () => {
             return done();
           });
       });
-  });
 
-  // PATCH User Subscription
+      test("401 Failed no token -- should return error", (done) => {
+        request(app)
+          .get("/users/subscriptions/1000")
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(401);
+            expect(body).toHaveProperty("message", "Unauthorized");
+            return done();
+          });
+      });
+
+      test("401 Failed wrong token -- should return error", (done) => {
+        request(app)
+          .get("/users/subscriptions/1000")
+          .set('access_token', 'wrong token')
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(401);
+            expect(body).toHaveProperty("message", "Invalid token");
+            return done();
+          });
+      });
+    });
+
+  //! PATCH User Subscription
   describe("PATCH /users/subscriptions/:id", () => {
     test("201 Success Update -- should return success message", (done) => {
       request(app)
@@ -603,9 +746,34 @@ describe("User Test", () => {
           return done();
         });
     });
+
+    test("401 Failed no token -- should return error", (done) => {
+      request(app)
+        .patch("/users/subscriptions/1000")
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Unauthorized");
+          return done();
+        });
+    });
+
+    test("401 Failed wrong token -- should return error", (done) => {
+      request(app)
+        .patch("/users/subscriptions/1000")
+        .set('access_token', 'wrong token')
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Invalid token");
+          return done();
+        });
+    });
   });
 
-  // GET User Detail
+  //! GET User Detail
   describe("GET /users/:id", () => {
     test("200 Success Read -- should return user detail", (done) => {
       request(app)
@@ -615,26 +783,16 @@ describe("User Test", () => {
           if (err) return done(err);
           const { body, status } = res;
           expect(status).toBe(200);
-          expect(body).toHaveProperty("id", expect.any(Number));
-          expect(body).toHaveProperty("fullName", expect.any(String));
-          expect(body).toHaveProperty("email", expect.any(String));
-          expect(body).toHaveProperty("password", expect.any(String));
-          expect(body).toHaveProperty("phoneNumber", expect.any(String));
-          expect(body).toHaveProperty("address", expect.any(String));
-          expect(body).toHaveProperty("latitude", expect.any(String));
-          expect(body).toHaveProperty("longitude", expect.any(String));
-          expect(body).toHaveProperty("childrenName", expect.any(String));
-          expect(body).toHaveProperty("balance", expect.any(Number));
-          expect(body).toHaveProperty("SubscriptionId", expect.any(Number));
-          expect(body).toHaveProperty("createdAt", expect.any(String));
-          expect(body).toHaveProperty("updatedAt", expect.any(String));
+          expect(body).toHaveProperty("user");
+          expect(body).toHaveProperty("driver");
+          expect(body).toHaveProperty("school");
           return done();
         });
     });
 
     test("404 Failed Read -- should return error if id is not in database", (done) => {
       request(app)
-        .get("/users/1000")
+        .get("/users/69")
         .set('access_token', access_token)
         .end((err, res) => {
           if (err) return done(err);
@@ -644,8 +802,34 @@ describe("User Test", () => {
           return done();
         });
     });
+
+    test("401 Failed no token -- should return error", (done) => {
+      request(app)
+        .get("/users/1")
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Unauthorized");
+          return done();
+        });
+    });
+
+    test("401 Failed wrong token -- should return error", (done) => {
+      request(app)
+        .get("/users/1")
+        .set('access_token', 'wrong token')
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Invalid token");
+          return done();
+        });
+    });
   });
 
+  //! Get User Chat
   describe('GET /users/chat/:userId', () => {
     test("200 Success Read -- should return user detail", (done) => {
       request(app)
@@ -681,6 +865,31 @@ describe("User Test", () => {
           const { body, status } = res;
           expect(status).toBe(404);
           expect(body).toHaveProperty("message", "Data Not Found");
+          return done();
+        });
+    });
+
+    test("401 Failed no token -- should return error", (done) => {
+      request(app)
+        .get("/users/1")
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Unauthorized");
+          return done();
+        });
+    });
+
+    test("401 Failed wrong token -- should return error", (done) => {
+      request(app)
+        .get("/users/1")
+        .set('access_token', 'wrong token')
+        .end((err, res) => {
+          if (err) return done(err);
+          const { body, status } = res;
+          expect(status).toBe(401);
+          expect(body).toHaveProperty("message", "Invalid token");
           return done();
         });
     });

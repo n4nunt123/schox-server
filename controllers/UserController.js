@@ -52,7 +52,6 @@ class UserController {
       
       res.status(200).json({ access_token: access_token, id: findUser.id });
     } catch (err) {
-      console.log(err)
       next(err);
     }
   }
@@ -91,7 +90,6 @@ class UserController {
 
     static async postBalance(req, res, next) {
         try {
-            console.log(req.body);
             const check = req.body;
             const transId = check.order_id.split("-");
             transId.splice(1, 1);
@@ -123,6 +121,17 @@ class UserController {
         }
     }
 
+    static async updateBalance(req, res, next) {
+        try {
+            const { userId } = req.params
+            const { balance } = req.body
+            await User.update({ balance }, {where: { id: userId }})
+            res.status(200).json({ message: "success update balance" })
+        } catch (err) {
+            next(err)
+        }
+    }
+
     static async postSubscription(req, res, next) {
         const today = moment();
         try {
@@ -130,14 +139,12 @@ class UserController {
                 req.body;
             const { id } = req.user;
             let startDate = new Date();
-            let endDate = new Date();
+            let endDate
 
             if (type == "weekly")
                 endDate = new Date(business.addWeekDays(today, 7));
             else if (type == "monthly")
                 endDate = new Date(business.addWeekDays(today, 30));
-
-          console.log(startDate, endDate)
           
             const createSubs = await Subscription.create({
                 type,
@@ -196,6 +203,7 @@ class UserController {
             const detailUser = await User.findByPk(id, {
                 include: [Subscription],
             });
+            if (!detailUser) throw { name: "notfound" };
             if (detailUser.SubscriptionId !== null) {
                 const schoolId = detailUser.Subscription.SchoolId;
                 const driverId = detailUser.Subscription.DriverId;
@@ -207,11 +215,10 @@ class UserController {
                     driver: driver,
                 });
             } else {
-                if (!detailUser) throw { message: "notfound" };
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
-            console.log(err);
+            console.log(err)
             next(err);
         }
     }
@@ -276,7 +283,7 @@ class UserController {
               include: [Driver]
             }]
         })
-      if (!detailUser) throw { message: "notfound" }
+      if (!detailUser) throw { name: "notfound" }
       res.status(200).json(detailUser);
     } catch (err) {
       next(err);
