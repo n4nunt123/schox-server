@@ -1,6 +1,6 @@
-const {comparePassword} = require('../helpers/bcrypt');
-const {signToken} = require('../helpers/jwt');
-const { Driver, User, Subscription } = require('../models');
+const { comparePassword } = require("../helpers/bcrypt");
+const { signToken } = require("../helpers/jwt");
+const { Driver, User, Subscription } = require("../models");
 
 class DriverController {
   static async login(req, res, next) {
@@ -25,11 +25,9 @@ class DriverController {
       const driver = await Driver.findByPk(driverId);
       if (!driver) throw { message: "notfound" };
       await Driver.update({ balance }, { where: { id: driverId } });
-      res
-        .status(200)
-        .json({
-          message: "success update driver balance with driver id: " + driverId,
-        });
+      res.status(200).json({
+        message: "success update driver balance with driver id: " + driverId,
+      });
     } catch (err) {
       next(err);
     }
@@ -66,23 +64,26 @@ class DriverController {
     } catch (err) {
       next(err);
     }
-    
+  }
+
   static async getDetailChat(req, res, next) {
     try {
-        const { id } = req.params
-        console.log(id)
-        const detailDriver = await Driver.findOne({
-            where: { id },
-            include: [{
-                model: Subscription,
-                include: [User]
-            }]
-        })
-        if (!detailDriver) throw { message: "notfound" }
-        res.status(200).json(detailDriver);
+      const { id } = req.params;
+      console.log(id);
+      const detailDriver = await Driver.findOne({
+        where: { id },
+        include: [
+          {
+            model: Subscription,
+            include: [User],
+          },
+        ],
+      });
+      if (!detailDriver) throw { message: "notfound" };
+      res.status(200).json(detailDriver);
     } catch (err) {
-        console.log(err)
-        next(err);
+      console.log(err);
+      next(err);
     }
   }
 }
