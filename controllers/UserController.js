@@ -126,7 +126,7 @@ class UserController {
                 res.status(201).json(transaction);
             });
         } catch (err) {
-            console.log(err);
+            console.log(err, "<<< error");
             next(err);
         }
     }
@@ -134,6 +134,7 @@ class UserController {
     static async postBalance(req, res, next) {
         try {
             const check = req.body;
+            console.log(check)
             const transId = check.order_id.split("-");
             transId.splice(1, 1);
             const data = await TopUp.findByPk(+transId);
@@ -160,6 +161,7 @@ class UserController {
                 res.status(200).json({ message: "top up failed" });
             }
         } catch (err) {
+            console.log(err, "<<< ini di post /balance");
             next(err);
         }
     }
