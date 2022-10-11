@@ -274,6 +274,7 @@ class UserController {
                 res.status(201).json(transaction);
             });
         } catch (err) {
+            console.log(err)
             next(err);
         }
     }
