@@ -1,6 +1,6 @@
-const {comparePassword} = require('../helpers/bcrypt');
-const {signToken} = require('../helpers/jwt');
-const { Driver, User, Subscription } = require('../models');
+const { comparePassword } = require("../helpers/bcrypt");
+const { signToken } = require("../helpers/jwt");
+const { Driver, User, Subscription } = require("../models");
 
 class DriverController {
   static async login(req, res, next) {
@@ -24,11 +24,9 @@ class DriverController {
       const driver = await Driver.findByPk(driverId);
       if (!driver) throw { name: "Drivers not found!" };
       await Driver.update({ balance }, { where: { id: driverId } });
-      res
-        .status(200)
-        .json({
-          message: "success update driver balance with driver id: " + driverId,
-        });
+      res.status(200).json({
+        message: "success update driver balance with driver id: " + driverId,
+      });
     } catch (err) {
       next(err);
     }
@@ -36,7 +34,7 @@ class DriverController {
 
   static async getDrivers(req, res, next) {
     try {
-      const drivers = await Driver.findAll();
+      const drivers = await Driver.findAll({ where: { driverStatus: "Available" } });
       res.status(200).json(drivers);
     } catch (err) {
       next(err);
@@ -81,8 +79,8 @@ class DriverController {
         if (!detailDriver) throw { name: "Drivers not found!" }
         res.status(200).json(detailDriver);
     } catch (err) {
-        console.log(err)
-        next(err);
+      console.log(err);
+      next(err);
     }
   }
 }
