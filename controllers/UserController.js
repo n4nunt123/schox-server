@@ -105,6 +105,16 @@ class UserController {
                 type, price, goHomeTime, toShoolTime, DriverId, SchoolId, startDate, endDate, 
                 status: "active"
             }, { transaction: t })
+
+            console.log(createSubs)
+            // let userFound = await User.findByPk({
+            //     where: {id}
+            // });
+            // await userFound.update({
+            //     SubscriptionId: createSubs.id
+            // });
+            // console.log(id)
+            // console.log(createSubs.id)
             await User.update({ SubscriptionId: createSubs.id }, { where: { id }})
 
             t.commit();
