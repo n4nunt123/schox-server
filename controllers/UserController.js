@@ -41,7 +41,6 @@ class UserController {
     }
     static async login(req, res, next) {
         try {
-            console.log();
             const { email, password } = req.body;
             const findUser = await User.findOne({ where: { email } });
             if (!findUser) throw { name: "invalid_email/pass" };
@@ -56,6 +55,7 @@ class UserController {
                 id: findUser.id,
             });
         } catch (err) {
+            console.log(err);
             next(err);
         }
     }
@@ -126,6 +126,17 @@ class UserController {
         }
     }
 
+    static async updateBalance(req, res, next) {
+        try {
+            const { userId } = req.params
+            const { balance } = req.body
+            await User.update({ balance }, {where: { id: userId }})
+            res.status(200).json({ message: "success update balance" })
+        } catch (err) {
+            next(err)
+        }
+    }
+
     static async postSubscription(req, res, next) {
         const today = moment();
         try {
@@ -133,7 +144,7 @@ class UserController {
                 req.body;
             const { id } = req.user;
             let startDate = new Date();
-            let endDate = new Date();
+            let endDate
 
             if (type == "weekly")
                 endDate = new Date(business.addWeekDays(today, 7));
