@@ -17,8 +17,22 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Subscription.init({
-    type: DataTypes.STRING,
-    price: DataTypes.INTEGER,
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "type is required" },
+        notEmpty: { msg: "type is required" },
+      }
+    },
+    price: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "Price is required" },
+        notEmpty: { msg: "Price is required" },
+      }
+    },
     status: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,

@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "postgres",
-    "password": "postgres",
+    "password": "exia12",
     "database": "schox",
     "host": "127.0.0.1",
     "dialect": "postgres"
@@ -9,7 +9,7 @@
   "test": {
     "username": "postgres",
     "password": "postgres",
-    "database": "schox_database_test",
+    "database": "schox_test",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
