@@ -4,6 +4,7 @@ const user = require("express").Router();
 
 user.post("/register", UserController.register);
 user.post("/login", UserController.login);
+user.post("/balances", UserController.postBalance);
 
 
 user.get('/chat/:userId', UserController.getDetailChat) // untuk chat
@@ -16,7 +17,7 @@ user.get("/schools", UserController.getSchools);
 user.post("/subscriptions", UserController.postSubscription);
 // user.post("/balances", UserController.postBalances)
 user.get("/balances/:userId", UserController.getBalance);
-user.post("/balances", UserController.updateBalance);
+
 user.get("/subscriptions/:id", UserController.getSubscription);
 user.patch("/subscriptions/:id", UserController.updateSubscription);
 user.post("/topup", UserController.topUp);
