@@ -1,6 +1,6 @@
 const {comparePassword} = require("../helpers/bcrypt");
 const {signToken} = require("../helpers/jwt");
-const { User, School, Subscription } = require("../models");
+const { User, School, Subscription, Driver } = require("../models");
 const moment = require('moment')
 const business = require('moment-business');
 
@@ -138,9 +138,18 @@ class UserController {
     static async getUserDetail(req, res, next) {
         try {
             const { id } = req.params
-            const detailUser = await User.findByPk(id)
-            if (!detailUser) throw { message: "notfound" }
-            res.status(200).json(detailUser);
+            const detailUser = await User.findByPk(id, { include: [Subscription] })
+            if (detailUser.SubscriptionId !== null) {
+                const schoolId = detailUser.Subscription.SchoolId
+                const driverId = detailUser.Subscription.DriverId
+                const school = await School.findByPk(schoolId)
+                const driver = await Driver.findByPk(driverId)
+                res.status(200).json({ user: detailUser, school: school, driver: driver });
+            } else {
+                if (!detailUser) throw { message: "notfound" }
+                res.status(200).json({ user: detailUser});
+            }
+            
         } catch (err) {
             console.log(err)
             next(err);

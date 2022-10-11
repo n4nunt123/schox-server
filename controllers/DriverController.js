@@ -37,7 +37,7 @@ class DriverController {
 
   static async getDrivers(req, res, next) {
     try {
-      const drivers = await Driver.findAll();
+      const drivers = await Driver.findAll({ where: { driverStatus: "Available" } });
       res.status(200).json(drivers);
     } catch (err) {
       next(err);
