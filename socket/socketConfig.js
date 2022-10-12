@@ -11,7 +11,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("test connection with socket");
+  console.log("connection with socket");
 
   socket.on("send:interval", (data) => {
     console.log(data);

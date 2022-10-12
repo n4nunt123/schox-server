@@ -11,7 +11,6 @@ async function authz(req, res, next) {
     req.user = { id: user.id };
     next();
   } catch (err) {
-    console.log(err)
     next(err);
   }
   

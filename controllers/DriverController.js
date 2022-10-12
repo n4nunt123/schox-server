@@ -12,7 +12,6 @@ class DriverController {
       if (!compare) throw { name: "invalid_email/password" };
       res.status(200).json(findDriver);
     } catch (err) {
-      console.log(err)
       next(err);
     }
   }
@@ -68,7 +67,6 @@ class DriverController {
   static async getDetailChat(req, res, next) {
     try {
         const { id } = req.params
-        console.log(id)
         const detailDriver = await Driver.findOne({
             where: { id },
             include: [{
@@ -79,7 +77,6 @@ class DriverController {
         if (!detailDriver) throw { name: "Drivers not found!" }
         res.status(200).json(detailDriver);
     } catch (err) {
-      console.log(err);
       next(err);
     }
   }

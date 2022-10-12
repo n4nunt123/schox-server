@@ -134,7 +134,6 @@ class UserController {
     static async postBalance(req, res, next) {
         try {
             const check = req.body;
-            console.log(check)
             const transId = check.order_id.split("-");
             transId.splice(1, 1);
             const data = await TopUp.findByPk(+transId);
@@ -263,7 +262,6 @@ class UserController {
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
-            console.log(err);
             next(err);
         }
     }
