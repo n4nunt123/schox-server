@@ -1,8 +1,6 @@
 const app = require('../app');
 const request = require("supertest");
 const { User, School, Subscription, ShuttleRecord } = require('../models');
-const { sequelize } = require('../models');
-const driver = require('../routes/driver');
 
 // ID driver sample yang ceritanya dah punya subscription
 let driverId = 1
