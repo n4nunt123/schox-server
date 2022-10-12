@@ -15,7 +15,7 @@ io.on("connection", (socket) => {
 
   socket.on("send:interval", (data) => {
     console.log(data);
-    socket.emit("recieve:interval", data);
+    socket.broadcast.emit("recieve:interval", data);
   });
 
   socket.on("disconnect", () => {
