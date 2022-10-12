@@ -206,6 +206,7 @@ class UserController {
                 { SubscriptionId: createSubs.id },
                 { where: { id } }
             );
+            await Driver.update({ driverStatus: "BOOKED" }, { where: { id: DriverId } })
             res.status(201).json({
                 message: "success create subscription " + createSubs.id,
             });

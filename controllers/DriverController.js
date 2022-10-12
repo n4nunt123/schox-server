@@ -83,6 +83,19 @@ class DriverController {
       next(err);
     }
   }
+
+  static async checkSubscription(req, res, next) {
+    try {
+      const { driverId } =  req.params
+      const checkSubs = await Subscription.findOne({ where: { DriverId: driverId } })
+      console.log(checkSubs)
+      if (!checkSubs) throw { name: "NOT_BOOKED_YET" }
+      else res.status(200).json({ message: "BOOKED", endDate: checkSubs.endDate })
+    } catch (err) {
+      next(err)
+    }
+  }
+
 }
 
 module.exports = {
