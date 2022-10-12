@@ -38,23 +38,26 @@ class UserController {
             next(err);
         }
     }
-  
-  static async login(req, res, next) {
-    try {
-      const { email, password } = req.body;
-      const findUser = await User.findOne({ where: { email } });
-      if (!findUser) throw { name: "invalid_email/password" };
-      const compare = comparePassword(password, findUser.password);
-      if (!compare) throw { name: "invalid_email/password" };
 
-      const payload = { id: findUser.id };
-      const access_token = signToken(payload);
-      
-      res.status(200).json({ access_token: access_token, id: findUser.id });
-    } catch (err) {
-      next(err);
+    static async login(req, res, next) {
+        try {
+            const { email, password } = req.body;
+            const findUser = await User.findOne({ where: { email } });
+            if (!findUser) throw { name: "invalid_email/password" };
+            const compare = comparePassword(password, findUser.password);
+            if (!compare) throw { name: "invalid_email/password" };
+
+            const payload = { id: findUser.id };
+            const access_token = signToken(payload);
+
+            res.status(200).json({
+                access_token: access_token,
+                id: findUser.id,
+            });
+        } catch (err) {
+            next(err);
+        }
     }
-  }
 
     static async postSchool(req, res, next) {
         try {
@@ -88,6 +91,46 @@ class UserController {
         }
     }
 
+    static async topUp(req, res, next) {
+        try {
+            const gross = req.body.gross;
+
+            let snap = new midtransClient.Snap({
+                isProduction: false,
+                serverKey: "SB-Mid-server-MKMNsq6bOP7MUmjxT6sC3z7_",
+            });
+            const id = new Date().getTime();
+            const topUp = await TopUp.create({
+                gross,
+                UserId: req.user.id,
+                status: "pending",
+            });
+
+            let parameter = {
+                transaction_details: {
+                    order_id: topUp.id + `-${id}`,
+                    gross_amount: gross,
+                },
+                credit_card: {
+                    secure: true,
+                },
+                customer_details: {
+                    first_name: "John",
+                    last_name: "Doe",
+                    email: "test@mail.com",
+                    phone: "081111111",
+                },
+            };
+
+            snap.createTransaction(parameter).then((transaction) => {
+                res.status(201).json(transaction);
+            });
+        } catch (err) {
+            console.log(err, "<<< error");
+            next(err);
+        }
+    }
+
     static async postBalance(req, res, next) {
         try {
             const check = req.body;
@@ -117,18 +160,19 @@ class UserController {
                 res.status(200).json({ message: "top up failed" });
             }
         } catch (err) {
+            console.log(err, "<<< ini di post /balance");
             next(err);
         }
     }
 
     static async updateBalance(req, res, next) {
         try {
-            const { userId } = req.params
-            const { balance } = req.body
-            await User.update({ balance }, {where: { id: userId }})
-            res.status(200).json({ message: "success update balance" })
+            const { userId } = req.params;
+            const { balance } = req.body;
+            await User.update({ balance }, { where: { id: userId } });
+            res.status(200).json({ message: "success update balance" });
         } catch (err) {
-            next(err)
+            next(err);
         }
     }
 
@@ -139,13 +183,13 @@ class UserController {
                 req.body;
             const { id } = req.user;
             let startDate = new Date();
-            let endDate
+            let endDate;
 
             if (type == "weekly")
                 endDate = new Date(business.addWeekDays(today, 7));
             else if (type == "monthly")
                 endDate = new Date(business.addWeekDays(today, 30));
-          
+
             const createSubs = await Subscription.create({
                 type,
                 price,
@@ -218,77 +262,28 @@ class UserController {
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
-            console.log(err)
             next(err);
         }
     }
 
-    // static async updateUser(req, res, next) {
-    //     try {
-    //         const { id } = req.params
-    //         const { SubscriptionId } = req.body
-    //         await User.update({ SubscriptionId }, { where: { id }})
-    //         res.status(200).json({ message: "success update user" })
-    //     } catch (err) {
-    //         next(err)
-    //     }
-    // }
-
-    static async topUp(req, res, next) {
+    static async getDetailChat(req, res, next) {
         try {
-            const gross = req.body.gross;
-
-            let snap = new midtransClient.Snap({
-                isProduction: false,
-                serverKey: "SB-Mid-server-degeBoSA2XjP6Yf9u6u8wMLL",
+            const { userId } = req.params;
+            const detailUser = await User.findOne({
+                where: { id: userId },
+                include: [
+                    {
+                        model: Subscription,
+                        include: [Driver],
+                    },
+                ],
             });
-            const id = new Date().getTime();
-            const topUp = await TopUp.create({
-                gross,
-                UserId: req.user.id,
-                status: "pending",
-            });
-
-            let parameter = {
-                transaction_details: {
-                    order_id: topUp.id + `-${id}`,
-                    gross_amount: gross,
-                },
-                credit_card: {
-                    secure: true,
-                },
-                customer_details: {
-                    first_name: "hahahaha",
-                    last_name: "",
-                    email: "test@mail.com",
-                    phone: "087777777",
-                },
-            };
-
-            snap.createTransaction(parameter).then((transaction) => {
-                res.status(201).json(transaction);
-            });
+            if (!detailUser) throw { message: "notfound" };
+            res.status(200).json(detailUser);
         } catch (err) {
             next(err);
         }
     }
-    
-  static async getDetailChat(req, res, next) {
-    try {
-      const { userId } = req.params
-      const detailUser = await User.findOne({
-        where: { id: userId },
-        include: [{
-              model: Subscription,
-              include: [Driver]
-            }]
-        })
-      if (!detailUser) throw { name: "notfound" }
-      res.status(200).json(detailUser);
-    } catch (err) {
-      next(err);
-    }
-  }
 }
 
 module.exports = UserController;

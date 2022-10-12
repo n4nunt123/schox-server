@@ -42,7 +42,6 @@ describe("POST /drivers/login", () => {
       .post("/drivers/login")
       .send(payload)
       .then((response) => {
-        console.log(response.status, 'woeeeeeeeeeeeeeeeeeee')
         expect(response.status).toBe(401);
         expect(response.body).toBeInstanceOf(Object);
         expect(response.body).toHaveProperty(
