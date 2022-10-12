@@ -1,6 +1,6 @@
 const { comparePassword } = require("../helpers/bcrypt");
 const { signToken } = require("../helpers/jwt");
-const { Driver, User, Subscription } = require("../models");
+const { Driver, User, Subscription, School } = require("../models");
 
 class DriverController {
     static async login(req, res, next) {
@@ -92,15 +92,26 @@ class DriverController {
             const checkSubs = await Subscription.findOne({
                 where: { DriverId: driverId, status: "active" },
             });
+
+            const user = await User.findOne({
+                where: { SubscriptionId: checkSubs.id },
+            });
+            const school = await School.findByPk(checkSubs.SchoolId);
+
             if (!checkSubs) throw { name: "NOT_BOOKED_YET" };
             const user = await User.findOne({ where: { SubscriptionId: checkSubs.id } })
             if(!user) throw { name: 'notfound' }
             else {
-              res.status(200).json({
-                  message: "BOOKED",
-                  subsDetail: {goHomeTime: checkSubs.goHomeTime, toShoolTime: checkSubs.toShoolTime},
-                  user: user
-              });
+                res.status(200).json({
+                    message: "BOOKED",
+                    subsDetail: {
+                        goHomeTime: checkSubs.goHomeTime,
+                        toShoolTime: checkSubs.toShoolTime,
+                        endDate: checkSubs.endDate,
+                    },
+                    user,
+                    school,
+                });
             }
         } catch (err) {
             next(err);
