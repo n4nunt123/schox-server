@@ -228,7 +228,9 @@ class UserController {
             const { id } = req.params;
             const {status} = req.body;
             const user = await User.findByPk(+id)
+            if(!user) throw { name: 'notfound' }
             const detailSubs = await Subscription.findByPk(user.SubscriptionId);
+            if(!detailSubs) throw { name: 'notfound' }
             const driver = await Driver.findByPk(detailSubs.DriverId)
             const total = driver.balance + detailSubs.price
 

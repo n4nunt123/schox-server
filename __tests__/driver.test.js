@@ -1,5 +1,86 @@
 const request = require("supertest");
 const app = require("../app.js");
+const { Subscription, School, User } = require('../models');
+
+
+const user = {
+  fullName: "Maria Mercedes",
+  email: "mercedes@gmail.com",
+  password: "12345",
+  phoneNumber: "08123456789",
+  address: "Jalan Pegangsaan Timur No. 56",
+  latitude: "-6.203988",
+  longitude: "106.845031",
+  childrenName: "Rosalinda",
+  balance: 0,
+  SubscriptionId: 1
+};
+
+const sub = {
+  type: 'active',
+  price: 696969,
+  status: 'active',
+  startDate: new Date(),
+  endDate: new Date(),
+  goHomeTime: 'active',
+  toShoolTime: 'active',
+  SchoolId: 1,
+  DriverId: 1
+}
+
+const sub2 = {
+  type: 'active',
+  price: 696969,
+  status: 'active',
+  startDate: new Date(),
+  endDate: new Date(),
+  goHomeTime: 'active',
+  toShoolTime: 'active',
+  SchoolId: 1,
+  DriverId: 2
+}
+
+const school = {
+  name: 'Highschool of nowhere',
+  address: 'Classified information',
+  latitude: 'Classified information',
+  longitude: 'Classified information'
+}
+
+beforeAll((done) => {
+  School.create(school)
+    .then(_ => {
+      return Subscription.create(sub)
+    })
+    .then(_ => {
+      return Subscription.create(sub2)
+    })
+    .then(_ => {
+      return User.create(user)
+    })
+    .then(_ => {
+      done();
+    })
+    .catch((err) => {
+      done(err);
+    });;
+});
+
+afterAll((done) => {
+  User.destroy({ truncate: true, cascade: true, restartIdentity: true})
+    .then(_ => {
+      return School.destroy({ truncate: true, cascade: true, restartIdentity: true})
+    })
+    .then(() => {
+      return Subscription.destroy({ truncate: true, cascade: true, restartIdentity: true})
+    })
+    .then(() => {
+      done();
+    })
+    .catch((err) => {
+      done(err);
+    });
+});
 
 //* login
 describe("POST /drivers/login", () => {
@@ -177,6 +258,41 @@ describe('GET /drivers/chat/:id', () => {
         expect(response.status).toBe(404)
         expect(response.body).toBeInstanceOf(Object);
         expect(response.body).toHaveProperty("message", "Driver not found");
+      })
+  })
+})
+
+//* GET subscribtions drivers
+describe('GET /drivers/subscriptions/:driverId', () => {
+  test('GET /drivers/subscriptions/:driverId - success test', () => {
+    return request(app)
+      .get('/drivers/subscriptions/1')
+      .then((response) => {
+        expect(response.status).toBe(200)
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty("message", "BOOKED");
+        expect(response.body).toHaveProperty("subsDetail");
+        expect(response.body).toHaveProperty("user");
+      })
+  })
+
+  test('GET /drivers/subscriptions/:driverId - fail test', () => {
+    return request(app)
+      .get('/drivers/subscriptions/3')
+      .then((response) => {
+        expect(response.status).toBe(404)
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty("message", "Driver is not booked yet");
+      })
+  })
+
+  test('GET /drivers/subscriptions/:driverId - fil test', () => {
+    return request(app)
+      .get('/drivers/subscriptions/2')
+      .then((response) => {
+        expect(response.status).toBe(404)
+        expect(response.body).toBeInstanceOf(Object);
+        expect(response.body).toHaveProperty("message", "Data Not Found");
       })
   })
 })
