@@ -794,11 +794,12 @@ describe("User Test", () => {
       request(app)
         .patch("/users/subscriptions/1")
         .set('access_token', access_token)
+        .send({ status: 'nonactive'})
         .end((err, res) => {
           if (err) return done(err);
           const { body, status } = res;
           expect(status).toBe(201);
-          expect(body).toHaveProperty("message", "success update subscription with id: 1");
+          expect(body).toHaveProperty("message", "success update subscription with id: 2");
           return done();
         });
     });
@@ -807,6 +808,7 @@ describe("User Test", () => {
       request(app)
         .patch("/users/subscriptions/1000")
         .set('access_token', access_token)
+        .send({ status: 'nonactive'})
         .end((err, res) => {
           if (err) return done(err);
           const { body, status } = res;
@@ -853,8 +855,6 @@ describe("User Test", () => {
           const { body, status } = res;
           expect(status).toBe(200);
           expect(body).toHaveProperty("user");
-          expect(body).toHaveProperty("driver");
-          expect(body).toHaveProperty("school");
           return done();
         });
     });
@@ -918,7 +918,7 @@ describe("User Test", () => {
           expect(body).toHaveProperty("longitude", expect.any(String));
           expect(body).toHaveProperty("childrenName", expect.any(String));
           expect(body).toHaveProperty("balance", expect.any(Number));
-          expect(body).toHaveProperty("SubscriptionId", expect.any(Number));
+          expect(body).toHaveProperty("SubscriptionId");
           expect(body).toHaveProperty("createdAt", expect.any(String));
           expect(body).toHaveProperty("updatedAt", expect.any(String));
           return done();

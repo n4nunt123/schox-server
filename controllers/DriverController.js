@@ -92,12 +92,15 @@ class DriverController {
             const checkSubs = await Subscription.findOne({
                 where: { DriverId: driverId, status: "active" },
             });
+
             const user = await User.findOne({
                 where: { SubscriptionId: checkSubs.id },
             });
             const school = await School.findByPk(checkSubs.SchoolId);
 
             if (!checkSubs) throw { name: "NOT_BOOKED_YET" };
+            const user = await User.findOne({ where: { SubscriptionId: checkSubs.id } })
+            if(!user) throw { name: 'notfound' }
             else {
                 res.status(200).json({
                     message: "BOOKED",
