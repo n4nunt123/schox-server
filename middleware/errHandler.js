@@ -29,6 +29,9 @@ const errHandler = (err, req, res, next) => {
     } else if (err.name === 'user already exist') {
         code = 400
         message = "Email must be unique"
+    } else if (err.name === 'NOT_BOOKED_YET') {
+        code = 404
+        message = "Driver is not booked yet"
     }
 
     res.status(code).json({ message });

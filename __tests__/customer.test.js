@@ -4,6 +4,7 @@ const { User, School, Subscription, TopUp } = require('../models');
 const {signToken} = require("../helpers/jwt");
 
 let access_token;
+let access_token2;
 
 const user = {
     fullName: "Maria Mercedes",
@@ -15,6 +16,18 @@ const user = {
     longitude: "106.845031",
     childrenName: "Rosalinda",
     balance: 0
+};
+
+const user2 = {
+    fullName: "Yuuwawawa Reeeee",
+    email: "yuwawa@gmail.com",
+    password: "12345",
+    phoneNumber: "08123456789",
+    address: "Jalan Pegangsaan Timur No. 56",
+    latitude: "-6.203988",
+    longitude: "106.845031",
+    childrenName: "Rosalinda",
+    balance: 696969
 };
 
 const school = {
@@ -56,7 +69,15 @@ beforeAll((done) => {
         UserId: result.id,
         status: 'pending'
       })
-      done();
+
+      return User.create(user2)
+    })
+    .then((result) => {
+      const payload = {
+        id: 6969696969
+      };
+      access_token2 = signToken(payload);
+      done()
     })
     .catch((err) => {
       done(err);
@@ -472,6 +493,23 @@ describe("User Test", () => {
             return done();
           });
       });
+
+      test("200 Failed transaction -- should return message nonauthorize if access_token doesn't match", (done) => {
+        const gross = '5000000'
+
+        request(app)
+          .post("/users/topup")
+          .set('access_token', access_token2)
+          .send({ gross })
+          .end((err, res) => {
+            if (err) return done(err);
+            const { body, status } = res;
+            expect(status).toBe(401);
+            expect(body).toBeInstanceOf(Object)
+            expect(body).toHaveProperty("message", 'Unauthorized');
+            return done();
+          });
+      });
     })
 
     // POST User Balance
@@ -689,6 +727,27 @@ describe("User Test", () => {
               return done();
             });
         });
+        
+        test("401 Failed access_token user not exist -- should return error", (done) => {
+          request(app)
+            .post("/users/subscriptions")
+            .send({
+                type: "weekly",
+                price: 200000,
+                goHomeTime: "14.00",
+                toShoolTime: "07.00",
+                DriverId: 1,
+                SchoolId: 1
+            })
+            .set('access_token', access_token2)
+            .end((err, res) => {
+              if (err) return done(err);
+              const { body, status } = res;
+              expect(status).toBe(401);
+              expect(body).toHaveProperty("message", "Unauthorized");
+              return done();
+            });
+        });
 
         test("400 Failed Add -- should return error if type is null", (done) => {
           request(app)
@@ -794,11 +853,12 @@ describe("User Test", () => {
       request(app)
         .patch("/users/subscriptions/1")
         .set('access_token', access_token)
+        .send({ status: 'nonactive'})
         .end((err, res) => {
           if (err) return done(err);
           const { body, status } = res;
           expect(status).toBe(201);
-          expect(body).toHaveProperty("message", "success update subscription with id: 1");
+          expect(body).toHaveProperty("message", "success update subscription with id: 2");
           return done();
         });
     });
@@ -807,6 +867,7 @@ describe("User Test", () => {
       request(app)
         .patch("/users/subscriptions/1000")
         .set('access_token', access_token)
+        .send({ status: 'nonactive'})
         .end((err, res) => {
           if (err) return done(err);
           const { body, status } = res;
@@ -853,8 +914,6 @@ describe("User Test", () => {
           const { body, status } = res;
           expect(status).toBe(200);
           expect(body).toHaveProperty("user");
-          expect(body).toHaveProperty("driver");
-          expect(body).toHaveProperty("school");
           return done();
         });
     });
@@ -918,7 +977,7 @@ describe("User Test", () => {
           expect(body).toHaveProperty("longitude", expect.any(String));
           expect(body).toHaveProperty("childrenName", expect.any(String));
           expect(body).toHaveProperty("balance", expect.any(Number));
-          expect(body).toHaveProperty("SubscriptionId", expect.any(Number));
+          expect(body).toHaveProperty("SubscriptionId");
           expect(body).toHaveProperty("createdAt", expect.any(String));
           expect(body).toHaveProperty("updatedAt", expect.any(String));
           return done();

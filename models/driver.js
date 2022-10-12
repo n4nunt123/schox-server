@@ -66,8 +66,5 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Driver',
   });
-  Driver.beforeCreate((driver, options) => {
-    driver.password = hashPassword(driver.password)
-  })
   return Driver;
 };
