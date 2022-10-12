@@ -226,13 +226,21 @@ class UserController {
     static async updateSubscription(req, res, next) {
         try {
             const { id } = req.params;
-            const detailSubs = await Subscription.findByPk(id);
+            const {status} = req.body;
+            const user = await User.findByPk(+id)
+            const detailSubs = await Subscription.findByPk(user.SubscriptionId);
+            const driver = await Driver.findByPk(detailSubs.DriverId)
+            const total = driver.balance + detailSubs.price
+
             if (!detailSubs) throw { name: "notfound" };
-            const status = "nonactive";
+
             await Subscription.update(
                 { status },
                 { where: { id: detailSubs.id } }
             );
+            await User.update({ SubscriptionId: null }, { where: { id: user.id } })
+            await Driver.update({ driverStatus: "Available", balance: total }, { where: { id: driver.id } })
+
             res.status(201).json({
                 message:
                     "success update subscription with id: " + detailSubs.id,
@@ -263,6 +271,7 @@ class UserController {
                 res.status(200).json({ user: detailUser });
             }
         } catch (err) {
+            console.log(err);
             next(err);
         }
     }
