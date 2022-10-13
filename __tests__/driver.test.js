@@ -280,9 +280,9 @@ describe('GET /drivers/subscriptions/:driverId', () => {
     return request(app)
       .get('/drivers/subscriptions/3')
       .then((response) => {
-        expect(response.status).toBe(404)
+        expect(response.status).toBe(500)
         expect(response.body).toBeInstanceOf(Object);
-        expect(response.body).toHaveProperty("message", "Driver is not booked yet");
+        expect(response.body).toHaveProperty("message", "Internal server error");
       })
   })
 
